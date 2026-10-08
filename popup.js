@@ -35,7 +35,7 @@ const GROUPS = {
     "hideGuideSupport",
     "hideGuideExploreShowMore",
   ],
-  hideMoreSection: ["hideGuideMusic", "hideGuideKids", "hideGuideReports"],
+  hideMoreSection: ["hideGuideMusic", "hideGuideKids", "hideGuideReports", "hideGuideFooter"],
 };
 
 const form = document.querySelector("form");

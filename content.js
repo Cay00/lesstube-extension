@@ -251,11 +251,64 @@ function markGuide() {
   const sections = new Set(rows.map((row) => row.section).filter(Boolean));
   for (const section of sections) {
     const inSection = rows.filter((row) => row.section === section);
-    const allHidden = inSection.length > 0 && inSection.every((row) => row.finalId && guideHidden(row.finalId));
+    const wantedStillCollapsed = librarySections.has(section) && [...LIBRARY_GUIDE].some((id) => {
+      return id !== "libraryShowMore" && !guideHidden(id) && !inSection.some((row) => row.finalId === id);
+    });
+    const allHidden = !wantedStillCollapsed && inSection.length > 0 && inSection.every((row) => row.finalId && guideHidden(row.finalId));
     const hideSubscriptionBlock = subscriptionSections.has(section) && settingsState.hideSubscriptionsSection === true;
     forceHide(section, hideSubscriptionBlock || allHidden);
     if (!hideSubscriptionBlock) syncSubscriptionExpansion(section, subscriptionSections.has(section));
+    if (librarySections.has(section)) revealCollapsedLibraryItems(section, inSection);
   }
+  hideGuideFooter();
+}
+
+function hideGuideFooter() {
+  const hide = settingsState.hideGuideFooter === true || settingsState.hideMoreSection === true;
+  const footers = [];
+  for (const guide of document.querySelectorAll("ytd-guide-renderer")) {
+    const root = guide.shadowRoot || guide;
+    footers.push(...root.querySelectorAll("#footer"));
+  }
+  for (const footer of footers) forceHide(footer, hide);
+}
+
+function entryLabel(entry) {
+  return (entry.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function revealCollapsedLibraryItems(section, rows) {
+  if (settingsState.hideLibrarySection === true || section.dataset.ytcLibraryLock === "1") return;
+  const shownIds = new Set(rows.filter((row) => row.finalId && isShown(row.entry)).map((row) => row.finalId));
+  const missing = [...LIBRARY_GUIDE].some((id) => id !== "libraryShowMore" && !guideHidden(id) && !shownIds.has(id));
+  if (!missing) return;
+
+  for (const row of rows) {
+    if (!row.finalId || row.finalId === "libraryShowMore" || guideHidden(row.finalId)) continue;
+    let node = row.entry;
+    while (node && node !== section) {
+      if (node.hasAttribute("hidden")) node.removeAttribute("hidden");
+      node = node.parentElement;
+    }
+    forceHide(row.entry, false);
+  }
+
+  for (const collapsible of section.querySelectorAll("ytd-guide-collapsible-entry-renderer")) {
+    setExpanded(collapsible, true);
+    collapsible.querySelectorAll("#expanded, #expandable-items").forEach((element) => element.removeAttribute("hidden"));
+  }
+
+  const showMore = [...section.querySelectorAll("ytd-guide-entry-renderer")].find((entry) => {
+    const text = entryLabel(entry);
+    return text === "pokaż więcej" || text === "show more";
+  });
+  if (!showMore) return;
+  section.dataset.ytcLibraryLock = "1";
+  setTimeout(() => delete section.dataset.ytcLibraryLock, 500);
+  const restoreHide = guideHidden("libraryShowMore");
+  if (restoreHide) forceHide(showMore, false);
+  (showMore.querySelector("a#endpoint, a, tp-yt-paper-item") || showMore).click();
+  if (restoreHide) forceHide(showMore, true);
 }
 
 function isSubscriptionSection(section, rows) {
