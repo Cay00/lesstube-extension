@@ -4,6 +4,10 @@
   "version": "0.1.0",
   "description": "Customize YouTube layout",
   "permissions": ["storage"],
+  "action": {
+    "default_title": "YouTube Customizer",
+    "default_popup": "popup.html"
+  },
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/*"],

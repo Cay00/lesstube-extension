@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <title>YouTube Customizer</title>
+    <style>
+      body {
+        margin: 0;
+        min-width: 220px;
+        font: 14px/1.4 system-ui, sans-serif;
+        color: #111;
+      }
+      form {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+      }
+      label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      select {
+        margin-left: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <form>
+      <label>
+        Kolumny
+        <select name="columns">
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+        </select>
+      </label>
+      <label><input type="checkbox" name="hideShorts" /> Ukryj Shorts</label>
+      <label><input type="checkbox" name="hideGames" /> Ukryj Pokój gier</label>
+    </form>
+    <script src="popup.js"></script>
+  </body>
+</html>

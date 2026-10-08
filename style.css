@@ -5,19 +5,23 @@
  * A real grid plus full-width shelves ignores that math.
  */
 
-html.ytc-columns-4 ytd-rich-grid-renderer {
-  --ytd-rich-grid-items-per-row: 4 !important;
-  --ytd-rich-grid-posts-per-row: 4 !important;
-  --ytd-rich-grid-slim-items-per-row: 4 !important;
-  --ytd-rich-grid-game-cards-per-row: 4 !important;
+html.ytc-columns {
+  --ytc-columns: 4;
+}
+
+html.ytc-columns ytd-rich-grid-renderer {
+  --ytd-rich-grid-items-per-row: var(--ytc-columns) !important;
+  --ytd-rich-grid-posts-per-row: var(--ytc-columns) !important;
+  --ytd-rich-grid-slim-items-per-row: var(--ytc-columns) !important;
+  --ytd-rich-grid-game-cards-per-row: var(--ytc-columns) !important;
   --ytd-rich-grid-item-margin: 0px !important;
   --ytd-rich-grid-item-min-width: 0px !important;
   max-width: none !important;
 }
 
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents {
+html.ytc-columns ytd-rich-grid-renderer > #contents {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(var(--ytc-columns), minmax(0, 1fr)) !important;
   column-gap: 16px !important;
   row-gap: 24px !important;
   width: 100% !important;
@@ -25,7 +29,7 @@ html.ytc-columns-4 ytd-rich-grid-renderer > #contents {
   justify-content: stretch !important;
 }
 
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer {
+html.ytc-columns ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer {
   width: auto !important;
   max-width: none !important;
   min-width: 0 !important;
@@ -33,24 +37,40 @@ html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer {
   flex: none !important;
 }
 
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer ytd-thumbnail,
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer #thumbnail,
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer yt-thumbnail-view-model,
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer yt-lockup-view-model,
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer ytd-rich-grid-media {
+html.ytc-columns ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer ytd-thumbnail,
+html.ytc-columns ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer #thumbnail,
+html.ytc-columns ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer yt-thumbnail-view-model,
+html.ytc-columns ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer yt-lockup-view-model,
+html.ytc-columns ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer ytd-rich-grid-media {
   width: 100% !important;
   max-width: 100% !important;
 }
 
 /* Shorts shelf, ads and the "load more" slot must occupy the whole row.
    Their inner tiles stay on YouTube's own horizontal scroller. */
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-rich-section-renderer,
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-rich-shelf-renderer,
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-ad-slot-renderer,
-html.ytc-columns-4 ytd-rich-grid-renderer > #contents > ytd-continuation-item-renderer {
+html.ytc-columns ytd-rich-grid-renderer > #contents > ytd-rich-section-renderer,
+html.ytc-columns ytd-rich-grid-renderer > #contents > ytd-rich-shelf-renderer,
+html.ytc-columns ytd-rich-grid-renderer > #contents > ytd-ad-slot-renderer,
+html.ytc-columns ytd-rich-grid-renderer > #contents > ytd-continuation-item-renderer {
   grid-column: 1 / -1 !important;
   width: auto !important;
   max-width: none !important;
   min-width: 0 !important;
   margin: 0 !important;
+}
+
+html.ytc-hide-shorts [data-ytc-hide="shorts"],
+html.ytc-hide-games [data-ytc-hide="games"],
+html.ytc-hide-shorts ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+html.ytc-hide-shorts ytd-rich-shelf-renderer[is-shorts],
+html.ytc-hide-shorts ytd-reel-shelf-renderer,
+html.ytc-hide-shorts ytd-guide-entry-renderer:has(a[href="/shorts"]),
+html.ytc-hide-shorts ytd-mini-guide-entry-renderer:has(a[href="/shorts"]),
+html.ytc-hide-games ytd-rich-section-renderer:has(a[href="/playables"]),
+html.ytc-hide-games ytd-rich-section-renderer:has(a[href^="/playables"]),
+html.ytc-hide-games ytd-guide-entry-renderer:has(a[href="/playables"]),
+html.ytc-hide-games ytd-guide-entry-renderer:has(a[href^="/playables"]),
+html.ytc-hide-games ytd-mini-guide-entry-renderer:has(a[href="/playables"]),
+html.ytc-hide-games ytd-mini-guide-entry-renderer:has(a[href^="/playables"]) {
+  display: none !important;
 }
