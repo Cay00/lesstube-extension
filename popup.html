@@ -6,14 +6,27 @@
     <style>
       body {
         margin: 0;
-        min-width: 220px;
-        font: 14px/1.4 system-ui, sans-serif;
+        width: 280px;
+        font: 13px/1.4 system-ui, sans-serif;
         color: #111;
       }
       form {
         display: grid;
-        gap: 10px;
-        padding: 14px;
+        gap: 12px;
+        max-height: 520px;
+        overflow: auto;
+        padding: 12px;
+      }
+      fieldset {
+        margin: 0;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        display: grid;
+        gap: 8px;
+      }
+      legend {
+        padding: 0 4px;
+        font-weight: 600;
       }
       label {
         display: flex;
@@ -23,22 +36,100 @@
       select {
         margin-left: auto;
       }
+      .sub {
+        display: grid;
+        gap: 8px;
+        margin-left: 16px;
+      }
+      .group {
+        margin: 6px 0 0;
+        font-weight: 600;
+      }
+      label:has(input:disabled) {
+        opacity: 0.45;
+      }
     </style>
   </head>
   <body>
     <form>
-      <label>
-        Kolumny
-        <select name="columns">
-          <option value="3">3</option>
-          <option value="4" selected>4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-        </select>
-      </label>
-      <label><input type="checkbox" name="hideShorts" /> Ukryj Shorts</label>
-      <label><input type="checkbox" name="hideGames" /> Ukryj Pokój gier</label>
+      <fieldset>
+        <legend>Strona główna</legend>
+        <label>
+          Przekierowanie główne
+          <select name="homeRedirect">
+            <option value="home">Strona główna</option>
+            <option value="subscriptions">Subskrypcje</option>
+            <option value="history">Historia</option>
+            <option value="library">Biblioteka</option>
+          </select>
+        </label>
+        <label><input type="checkbox" name="hideSuggestions" /> Ukryj sugestie</label>
+        <label>
+          Kolumny
+          <select name="columns">
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+          </select>
+        </label>
+        <label><input type="checkbox" name="hideMixes" /> Ukryj playlisty i składanki</label>
+        <label><input type="checkbox" name="hideAds" /> Ukryj reklamy</label>
+        <label><input type="checkbox" name="hideShorts" /> Ukryj Shorts</label>
+        <label><input type="checkbox" name="hideGames" /> Ukryj Pokój gier</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Lewy pasek</legend>
+        <label><input type="checkbox" name="hideHomeSection" /> Ukryj całą sekcję</label>
+        <div class="sub">
+          <label><input type="checkbox" name="hideGuideHome" /> Strona główna</label>
+          <label><input type="checkbox" name="hideGuideShorts" /> Shorts</label>
+        </div>
+        <p class="group">Subskrypcje</p>
+        <label><input type="checkbox" name="hideSubscriptionsSection" /> Ukryj całą sekcję</label>
+        <div class="sub">
+          <label><input type="checkbox" name="hideGuideSubscriptions" /> Subskrypcje</label>
+          <label><input type="checkbox" name="expandSubscriptions" /> Rozwiń wszystkie</label>
+        </div>
+        <label><input type="checkbox" name="hideLibrarySection" /> Ukryj całą sekcję</label>
+        <div class="sub">
+        <label><input type="checkbox" name="hideGuideYou" /> Ty</label>
+        <label><input type="checkbox" name="hideGuideChannel" /> Twój kanał</label>
+        <label><input type="checkbox" name="hideGuideHistory" /> Historia</label>
+        <label><input type="checkbox" name="hideGuidePlaylists" /> Playlisty</label>
+        <label><input type="checkbox" name="hideGuideWatchLater" /> Do obejrzenia</label>
+        <label><input type="checkbox" name="hideGuideLiked" /> Polubione filmy</label>
+        <label><input type="checkbox" name="hideGuideYourVideos" /> Twoje filmy</label>
+        <label><input type="checkbox" name="hideGuideDownloads" /> Pobrane</label>
+        <label><input type="checkbox" name="hideGuideCourses" /> Kursy</label>
+        <label><input type="checkbox" name="hideGuideClips" /> Klipy</label>
+        <label><input type="checkbox" name="hideGuideLibraryShowMore" /> Pokaż mniej</label>
+        </div>
+        <p class="group">Odkrywaj</p>
+        <label><input type="checkbox" name="hideExploreSection" /> Ukryj całą sekcję</label>
+        <div class="sub">
+        <label><input type="checkbox" name="hideGuideExploreMusic" /> Muzyka</label>
+        <label><input type="checkbox" name="hideGuideMovies" /> Filmy</label>
+        <label><input type="checkbox" name="hideGuideHype" /> Podbijanie</label>
+        <label><input type="checkbox" name="hideGuideLive" /> Na żywo</label>
+        <label><input type="checkbox" name="hideGuideGaming" /> Gry</label>
+        <label><input type="checkbox" name="hideGuideNews" /> Wiadomości</label>
+        <label><input type="checkbox" name="hideGuideSports" /> Sport</label>
+        <label><input type="checkbox" name="hideGuidePodcasts" /> Podcasty</label>
+        <label><input type="checkbox" name="hideGuidePlayables" /> Pokój gier</label>
+        <label><input type="checkbox" name="hideGuideSupport" /> Wspieranie kanału</label>
+        <label><input type="checkbox" name="hideGuideExploreShowMore" /> Pokaż mniej</label>
+        </div>
+        <p class="group">Więcej z YouTube</p>
+        <label><input type="checkbox" name="hideMoreSection" /> Ukryj całą sekcję</label>
+        <div class="sub">
+        <label><input type="checkbox" name="hideGuideMusic" /> YouTube Music</label>
+        <label><input type="checkbox" name="hideGuideKids" /> YouTube Kids</label>
+        <label><input type="checkbox" name="hideGuideReports" /> Historia zgłoszeń</label>
+        </div>
+      </fieldset>
     </form>
     <script src="popup.js"></script>
   </body>

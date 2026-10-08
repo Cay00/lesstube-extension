@@ -74,3 +74,51 @@ html.ytc-hide-games ytd-mini-guide-entry-renderer:has(a[href="/playables"]),
 html.ytc-hide-games ytd-mini-guide-entry-renderer:has(a[href^="/playables"]) {
   display: none !important;
 }
+
+html.ytc-hide-suggestions ytd-browse[page-subtype="home"] ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer {
+  display: none !important;
+}
+
+html.ytc-hide-mixes ytd-browse[page-subtype="home"] ytd-rich-item-renderer:has(a[href*="list=RD"]),
+html.ytc-hide-mixes ytd-browse[page-subtype="home"] ytd-rich-item-renderer:has(a[href*="start_radio=1"]),
+html.ytc-hide-mixes ytd-browse[page-subtype="home"] ytd-rich-item-renderer:has(a[href*="/playlist?list="]),
+html.ytc-hide-mixes ytd-browse[page-subtype="home"] ytd-rich-item-renderer:has(ytd-playlist-thumbnail),
+html.ytc-hide-mixes ytd-browse[page-subtype="home"] ytd-rich-item-renderer:has(yt-collection-thumbnail-view-model),
+html.ytc-hide-mixes ytd-browse[page-subtype="home"] ytd-rich-section-renderer:has(a[href*="/playlist?list="]) {
+  display: none !important;
+}
+
+html.ytc-hide-ads ytd-browse[page-subtype="home"] ytd-ad-slot-renderer,
+html.ytc-hide-ads ytd-browse[page-subtype="home"] ytd-display-ad-renderer,
+html.ytc-hide-ads ytd-browse[page-subtype="home"] ytd-banner-promo-renderer,
+html.ytc-hide-ads ytd-browse[page-subtype="home"] ytd-rich-item-renderer:has([aria-label="Reklama"]),
+html.ytc-hide-ads ytd-browse[page-subtype="home"] ytd-rich-item-renderer:has([aria-label="Sponsorowane"]),
+html.ytc-hide-ads ytd-browse[page-subtype="home"] ytd-rich-item-renderer:has([aria-label="Sponsored"]),
+html.ytc-hide-ads ytd-browse[page-subtype="home"] ytd-rich-item-renderer:has([aria-label="Ad"]) {
+  display: none !important;
+}
+
+html.ytc-hide-home-section [data-ytc-section="home"],
+html.ytc-hide-home-section ytd-mini-guide-entry-renderer[data-ytc-guide="home"],
+html.ytc-hide-home-section ytd-mini-guide-entry-renderer[data-ytc-guide="subscriptions"],
+html.ytc-hide-home-section ytd-mini-guide-entry-renderer[data-ytc-guide="music"],
+html.ytc-hide-home-section ytd-mini-guide-entry-renderer[data-ytc-guide="kids"],
+html.ytc-hide-library-section [data-ytc-section="library"],
+html.ytc-hide-library-section ytd-mini-guide-entry-renderer[data-ytc-guide="you"],
+html.ytc-hide-library-section ytd-mini-guide-entry-renderer[data-ytc-guide="library"],
+html.ytc-hide-guide-home [data-ytc-guide="home"],
+html.ytc-hide-guide-subscriptions [data-ytc-guide="subscriptions"],
+html.ytc-hide-guide-music [data-ytc-guide="music"],
+html.ytc-hide-guide-kids [data-ytc-guide="kids"],
+html.ytc-hide-guide-you [data-ytc-guide="you"],
+html.ytc-hide-guide-channel [data-ytc-guide="channel"],
+html.ytc-hide-guide-history [data-ytc-guide="history"],
+html.ytc-hide-guide-playlists [data-ytc-guide="playlists"],
+html.ytc-hide-guide-your-videos [data-ytc-guide="yourVideos"],
+html.ytc-hide-guide-watch-later [data-ytc-guide="watchLater"],
+html.ytc-hide-guide-downloads [data-ytc-guide="downloads"],
+html.ytc-hide-guide-clips [data-ytc-guide="clips"],
+html.ytc-hide-guide-liked [data-ytc-guide="liked"],
+html.ytc-hide-guide-show-more [data-ytc-guide="showMore"] {
+  display: none !important;
+}
