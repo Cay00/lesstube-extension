@@ -39,6 +39,28 @@ const GROUPS = {
 };
 
 const form = document.querySelector("form");
+const tabs = document.querySelectorAll(".tab");
+const PANEL_KEY = "ytc-panel";
+
+function showPanel(id) {
+  const panel = form.querySelector(`fieldset[data-panel="${id}"]`);
+  if (!panel) return;
+  for (const tab of tabs) {
+    const active = tab.dataset.panel === id;
+    tab.classList.toggle("is-active", active);
+    tab.setAttribute("aria-selected", String(active));
+  }
+  for (const fieldset of form.querySelectorAll("fieldset")) {
+    fieldset.hidden = fieldset.dataset.panel !== id;
+  }
+  sessionStorage.setItem(PANEL_KEY, id);
+}
+
+for (const tab of tabs) {
+  tab.addEventListener("click", () => showPanel(tab.dataset.panel));
+}
+
+showPanel(sessionStorage.getItem(PANEL_KEY) || "home");
 
 function syncGroups() {
   for (const [parent, children] of Object.entries(GROUPS)) {

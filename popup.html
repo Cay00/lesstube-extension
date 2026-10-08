@@ -30,14 +30,61 @@
       background: var(--bg);
     }
 
+    .tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 10px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab {
+      appearance: none;
+      margin: 0;
+      padding: 11px 10px 9px;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .tab:hover {
+      color: var(--text);
+    }
+
+    .tab.is-active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab:focus-visible {
+      outline: 2px solid #ff6680;
+      outline-offset: -2px;
+    }
+
     form {
       display: grid;
       gap: 12px;
-      max-height: 560px;
+      max-height: 520px;
       overflow-y: auto;
       padding: 14px;
       scrollbar-width: thin;
       scrollbar-color: #c9c9c9 transparent;
+    }
+
+    fieldset[hidden] {
+      display: none;
     }
 
     /* Główne sekcje */
@@ -237,9 +284,12 @@
       <small>Dostosuj swój YouTube</small>
     </div>
   </header>
+  <nav class="tabs" aria-label="Ustawienia">
+    <button type="button" class="tab is-active" data-panel="home" aria-selected="true">Strona główna</button>
+    <button type="button" class="tab" data-panel="sidebar" aria-selected="false">Lewy pasek</button>
+  </nav>
   <form>
-    <fieldset>
-      <legend>Strona główna</legend>
+    <fieldset data-panel="home">
       <label>
         Przekierowanie główne
         <select name="homeRedirect">
@@ -266,8 +316,7 @@
       <label><input type="checkbox" name="hideGames" /> Ukryj Pokój gier</label>
     </fieldset>
 
-    <fieldset>
-      <legend>Lewy pasek</legend>
+    <fieldset data-panel="sidebar" hidden>
       <p class="group">Główne</p>
       <label><input type="checkbox" name="hideHomeSection" /> Ukryj całą sekcję</label>
       <div class="sub">
