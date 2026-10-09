@@ -366,6 +366,266 @@ function syncSubscriptionExpansion(section, isSubscriptions) {
   (button.entry.querySelector("a#endpoint, a, tp-yt-paper-item") || button.entry).click();
 }
 
+const VIEWS_RE = /\b(wyświetleń|wyświetlenia|wyświetlenie|views)\b/i;
+const DATE_RE = /(\btemu\b|\bago\b|premier|opublikowan|streamed|emisj)/i;
+const LICENSE_RE = /\b(licencja|license|kategoria|category|lokalizacja|location|creative commons)\b/i;
+const FUND_RE = /zbiórk|fundraiser|donate|darowizn/i;
+const MORE_CHANNEL_RE = /więcej z tego kanału|more videos|more from this channel|from this channel/i;
+const ACTION_RULES = [
+  ["subscribe", /^(subskrybuj|subscribe|subskrybujesz|subscribed)$/i],
+  ["join", /^(dołącz|join)$/i],
+  ["share", /^(udostępnij|share)$/i],
+  ["download", /^(pobierz|download)$/i],
+  ["save", /^(zapisz|save)$/i],
+  ["clip", /^(klip|clip)$/i],
+  ["thanks", /super thanks|podziękuj|thanks/i],
+  ["notify", /powiadom|notification/i],
+  ["offers", /^(towary|bilety|oferty|merch|tickets|offers)$/i],
+];
+
+const behaviorLock = { autoplay: 0, theater: 0, expand: 0 };
+
+function onWatchPage() {
+  return location.pathname === "/watch";
+}
+
+function tagPart(element, part) {
+  if (!element || element.dataset.ytcPart === part) return;
+  element.dataset.ytcPart = part;
+}
+
+function labelOf(element) {
+  return (
+    element.getAttribute("aria-label") ||
+    element.getAttribute("title") ||
+    element.innerText ||
+    ""
+  ).replace(/\s+/g, " ").trim();
+}
+
+function tagWatchText() {
+  const root = document.querySelector("ytd-watch-metadata");
+  if (!root) return;
+  const nodes = root.querySelectorAll(
+    "#view-count, #date, #info, #info-strings, yt-formatted-string, span, ytd-metadata-row-renderer, ytd-rich-metadata-renderer, #super-title"
+  );
+  for (const node of nodes) {
+    if (node.closest("ytd-comment-renderer, ytd-comments")) continue;
+    const text = (node.innerText || "").replace(/\s+/g, " ").trim();
+    if (!text || text.length > 180) {
+      continue;
+    }
+    const views = VIEWS_RE.test(text);
+    const date = DATE_RE.test(text) || /^\d{1,2}\s+\p{L}+\.?\s+\d{4}$/u.test(text);
+    if (views && date) tagPart(node, "views-date");
+    else if (views && text.length < 80) tagPart(node, "views");
+    else if (date && text.length < 80) tagPart(node, "date");
+    else if (LICENSE_RE.test(text)) tagPart(node, "license");
+  }
+}
+
+function tagWatchActions() {
+  const scopes = document.querySelectorAll(
+    "ytd-watch-metadata #actions, ytd-watch-metadata #owner, ytd-watch-metadata #top-row, ytd-watch-metadata #menu, .html5-video-player"
+  );
+  for (const scope of scopes) {
+    for (const button of scope.querySelectorAll("button, yt-button-shape, a, tp-yt-paper-button")) {
+      const label = labelOf(button);
+      if (!label) continue;
+      if (MORE_CHANNEL_RE.test(label)) {
+        tagPart(button, "more-channel");
+        continue;
+      }
+      if (FUND_RE.test(label) && button.closest("ytd-video-owner-renderer, #owner, #top-row")) {
+        tagPart(button, "fundraiser-badge");
+        continue;
+      }
+      const rule = ACTION_RULES.find(([, pattern]) => pattern.test(label));
+      if (!rule) continue;
+      const target = button.closest("yt-button-view-model, ytd-button-renderer, ytd-menu-service-item-renderer") || button;
+      tagPart(target, rule[0]);
+    }
+  }
+}
+
+function clickOnce(element, key) {
+  if (!element || Date.now() - behaviorLock[key] < 1200) return;
+  behaviorLock[key] = Date.now();
+  element.click();
+}
+
+function playerPopupOpen() {
+  for (const popup of document.querySelectorAll(".html5-video-player .ytp-popup")) {
+    if (popup.getAttribute("aria-hidden") === "true") continue;
+    const style = getComputedStyle(popup);
+    if (style.display !== "none" && style.visibility !== "hidden") return true;
+  }
+  return false;
+}
+
+function applyWatchBehaviors() {
+  if (!onWatchPage()) return;
+  tagWatchText();
+  tagWatchActions();
+  if (playerPopupOpen()) return;
+  if (settingsState.autoTheater === true) {
+    const flexy = document.querySelector("ytd-watch-flexy");
+    const button = document.querySelector(".ytp-size-button");
+    if (flexy && button && !flexy.hasAttribute("theater") && !flexy.hasAttribute("fullscreen")) {
+      clickOnce(button, "theater");
+    }
+  }
+  if (settingsState.expandDescription === true && settingsState.hideDescription !== true) {
+    const expander = document.querySelector("ytd-watch-metadata ytd-text-inline-expander, ytd-watch-metadata ytd-expander");
+    const button = expander?.querySelector("#expand, button#expand, tp-yt-paper-button#expand");
+    if (button && isShown(button)) clickOnce(button, "expand");
+  }
+}
+
+const UPLOAD_RE = /^(prześlij|przeslij|utwórz|utworz|create|upload)$/i;
+
+function forEachDeep(root, visit) {
+  if (!root?.querySelectorAll) return;
+  for (const node of root.querySelectorAll("*")) {
+    visit(node);
+    if (node.shadowRoot) forEachDeep(node.shadowRoot, visit);
+  }
+}
+
+function uploadHost(node) {
+  let current = node;
+  while (current) {
+    const root = current.getRootNode();
+    if (!root || root === document) {
+      return current.closest("ytd-topbar-menu-button-renderer, ytd-button-renderer, yt-button-view-model") || current;
+    }
+    current = root.host;
+  }
+  return node;
+}
+
+const endscreenTargets = new Set();
+
+function classNameOf(node) {
+  const value = node.className;
+  if (typeof value === "string") return value;
+  return value?.baseVal || "";
+}
+
+function hideEndscreen() {
+  if (!onWatchPage()) return;
+  const hide = settingsState.hideEndscreen === true;
+  const player = document.querySelector("#movie_player, ytd-player");
+  const found = new Set();
+  if (player) {
+    forEachDeep(player, (node) => {
+      const className = classNameOf(node);
+      if (!className || !/endscreen|videowall-still|videowall-endscreen/i.test(className)) return;
+      if (/html5-video-player/.test(className)) return;
+      found.add(node);
+      endscreenTargets.add(node);
+      forceHide(node, hide);
+    });
+  }
+  for (const element of endscreenTargets) {
+    if (found.has(element)) continue;
+    if (hide && element.isConnected) continue;
+    forceHide(element, false);
+    endscreenTargets.delete(element);
+  }
+}
+
+const TRANSCRIPT_RE = /transkrypc|transcript/i;
+const transcriptTargets = new Set();
+
+function transcriptHost(node) {
+  let current = node;
+  while (current) {
+    const root = current.getRootNode();
+    if (!root || root === document) {
+      return current.closest(
+        "ytd-video-description-transcript-section-renderer, ytd-transcript-renderer, ytd-transcript-search-panel-renderer, ytd-button-renderer, yt-button-view-model, button-view-model, button"
+      ) || current;
+    }
+    current = root.host;
+  }
+  return node;
+}
+
+function hideTranscript() {
+  if (!onWatchPage()) return;
+  const hide = settingsState.hideTranscript === true;
+  const root = document.querySelector("ytd-watch-flexy");
+  const found = new Set();
+  if (root) {
+    forEachDeep(root, (node) => {
+      const targetId = node.getAttribute("target-id") || "";
+      if (/transcript/i.test(targetId)) {
+        found.add(node);
+        transcriptTargets.add(node);
+        forceHide(node, hide);
+        return;
+      }
+      const tag = node.tagName;
+      if (
+        tag === "YTD-VIDEO-DESCRIPTION-TRANSCRIPT-SECTION-RENDERER" ||
+        tag === "YTD-TRANSCRIPT-RENDERER" ||
+        tag === "YTD-TRANSCRIPT-SEARCH-PANEL-RENDERER"
+      ) {
+        found.add(node);
+        transcriptTargets.add(node);
+        forceHide(node, hide);
+        return;
+      }
+      const label = (node.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim();
+      const text = node.childElementCount === 0 ? (node.textContent || "").replace(/\s+/g, " ").trim() : "";
+      if ((!TRANSCRIPT_RE.test(label) && !TRANSCRIPT_RE.test(text)) || text.length > 48) return;
+      const host = transcriptHost(node);
+      if (!host || host.closest("ytd-comments, ytd-comment-renderer, ytd-comment-thread-renderer")) return;
+      host.dataset.ytcPart = "transcript";
+      found.add(host);
+      transcriptTargets.add(host);
+      forceHide(host, hide);
+    });
+  }
+  for (const element of transcriptTargets) {
+    if (found.has(element)) continue;
+    if (hide && element.isConnected) continue;
+    forceHide(element, false);
+    if (element.dataset.ytcPart === "transcript") delete element.dataset.ytcPart;
+    transcriptTargets.delete(element);
+  }
+}
+
+const uploadTargets = new Set();
+
+function hideUploadButton() {
+  const masthead = document.querySelector("ytd-masthead");
+  const hide = settingsState.hideMastheadUpload === true || settingsState.hideMasthead === true;
+  const found = new Set();
+  if (masthead) {
+    forEachDeep(masthead, (node) => {
+      if (node.id === "avatar-btn") return;
+      const label = (node.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim();
+      const text = node.childElementCount === 0 ? (node.textContent || "").replace(/\s+/g, " ").trim() : "";
+      if (!UPLOAD_RE.test(label) && !UPLOAD_RE.test(text)) return;
+      const host = uploadHost(node);
+      if (!host || host.id === "avatar-btn" || host.closest?.("#avatar-btn")) return;
+      host.dataset.ytcUpload = "1";
+      found.add(host);
+      uploadTargets.add(host);
+      forceHide(host, hide);
+    });
+  }
+  for (const element of uploadTargets) {
+    if (found.has(element)) continue;
+    if (hide && element.isConnected) continue;
+    forceHide(element, false);
+    delete element.dataset.ytcUpload;
+    uploadTargets.delete(element);
+  }
+}
+
 function hideWidgets() {
   document.querySelectorAll("ytd-rich-section-renderer, ytd-rich-shelf-renderer, ytd-reel-shelf-renderer").forEach((section) => {
     if (section.matches("ytd-rich-shelf-renderer[is-shorts], ytd-reel-shelf-renderer")) {
@@ -383,6 +643,9 @@ function hideWidgets() {
   });
 
   markGuide();
+  hideUploadButton();
+  hideTranscript();
+  hideEndscreen();
 }
 
 let applying = false;
@@ -399,6 +662,7 @@ function refresh() {
     try {
       fixAllGrids();
       hideWidgets();
+      applyWatchBehaviors();
     } finally {
       applying = false;
     }
@@ -437,6 +701,84 @@ const FLAGS = {
   hideGuideClips: "ytc-hide-guide-clips",
   hideGuideLiked: "ytc-hide-guide-liked",
   hideGuideShowMore: "ytc-hide-guide-show-more",
+  hideSecondary: "ytc-hide-secondary",
+  hideRelated: "ytc-hide-related",
+  hideLiveChat: "ytc-hide-live-chat",
+  hideWatchPlaylist: "ytc-hide-watch-playlist",
+  hideFundraiser: "ytc-hide-fundraiser",
+  hideAutoplayCard: "ytc-hide-autoplay-card",
+  hideRelatedAds: "ytc-hide-related-ads",
+  hideRelatedShorts: "ytc-hide-related-shorts",
+  hideRelatedChips: "ytc-hide-related-chips",
+  hideEndscreen: "ytc-hide-endscreen",
+  hideEndCards: "ytc-hide-end-cards",
+  hideInfoCards: "ytc-hide-info-cards",
+  hidePlayerTime: "ytc-hide-player-time",
+  hideHeatmap: "ytc-hide-heatmap",
+  hidePaidPromotion: "ytc-hide-paid-promotion",
+  hideCaptions: "ytc-hide-captions",
+  hideAnnotations: "ytc-hide-annotations",
+  hideProgressBar: "ytc-hide-progress-bar",
+  hidePlayerTitle: "ytc-hide-player-title",
+  hidePlayButton: "ytc-hide-play-button",
+  hideReplayButton: "ytc-hide-replay-button",
+  hideNextButton: "ytc-hide-next-button",
+  hidePrevButton: "ytc-hide-prev-button",
+  hideVolume: "ytc-hide-volume",
+  hideChapters: "ytc-hide-chapters",
+  hideAutonavButton: "ytc-hide-autonav-button",
+  hideSubtitlesButton: "ytc-hide-subtitles-button",
+  hideSettingsButton: "ytc-hide-settings-button",
+  hideMiniplayer: "ytc-hide-miniplayer",
+  hideTheaterButton: "ytc-hide-theater-button",
+  hideFullscreen: "ytc-hide-fullscreen",
+  hideAirplay: "ytc-hide-airplay",
+  hideMoreFromChannel: "ytc-hide-more-from-channel",
+  hideVideoTitle: "ytc-hide-video-title",
+  hideChannelAvatar: "ytc-hide-channel-avatar",
+  hideChannelName: "ytc-hide-channel-name",
+  hideSubCount: "ytc-hide-sub-count",
+  hideFundraiserBadge: "ytc-hide-fundraiser-badge",
+  hideVerifiedBadge: "ytc-hide-verified-badge",
+  hideLicenseRow: "ytc-hide-license-row",
+  hideOffers: "ytc-hide-offers",
+  hideSubscribe: "ytc-hide-subscribe",
+  hideJoin: "ytc-hide-join",
+  hideNotifyBell: "ytc-hide-notify-bell",
+  hideLikeBar: "ytc-hide-like-bar",
+  hideShare: "ytc-hide-share",
+  hideDownload: "ytc-hide-download",
+  hideSave: "ytc-hide-save",
+  hideClip: "ytc-hide-clip",
+  hideThanks: "ytc-hide-thanks",
+  hideMoreActions: "ytc-hide-more-actions",
+  hideDescription: "ytc-hide-description",
+  hideViewCount: "ytc-hide-view-count",
+  hidePublishDate: "ytc-hide-publish-date",
+  hideHashtags: "ytc-hide-hashtags",
+  hideChannelInfo: "ytc-hide-channel-info",
+  hideDescriptionChapters: "ytc-hide-description-chapters",
+  hideTranscript: "ytc-hide-transcript",
+  hideComments: "ytc-hide-comments",
+  hideCommentBox: "ytc-hide-comment-box",
+  hideCommentAvatars: "ytc-hide-comment-avatars",
+  hideCommentLikes: "ytc-hide-comment-likes",
+  hideCommentReplies: "ytc-hide-comment-replies",
+  hideCommentHearts: "ytc-hide-comment-hearts",
+  hideCommentBadges: "ytc-hide-comment-badges",
+  hideCommentPinned: "ytc-hide-comment-pinned",
+  hideCommentSort: "ytc-hide-comment-sort",
+  hideCommentHeader: "ytc-hide-comment-header",
+  hideCommentTime: "ytc-hide-comment-time",
+  hideMasthead: "ytc-hide-masthead",
+  hideMastheadMenu: "ytc-hide-masthead-menu",
+  hideMastheadLogo: "ytc-hide-masthead-logo",
+  hideMastheadSearch: "ytc-hide-masthead-search",
+  hideMastheadMic: "ytc-hide-masthead-mic",
+  hideMastheadUpload: "ytc-hide-masthead-upload",
+  hideMastheadNotifications: "ytc-hide-masthead-notifications",
+  hideMastheadAvatar: "ytc-hide-masthead-avatar",
+  hideSearchSuggestions: "ytc-hide-search-suggestions",
 };
 
 const DEFAULTS = {

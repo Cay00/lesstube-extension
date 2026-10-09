@@ -36,29 +36,81 @@ const GROUPS = {
     "hideGuideExploreShowMore",
   ],
   hideMoreSection: ["hideGuideMusic", "hideGuideKids", "hideGuideReports", "hideGuideFooter"],
+  hideMasthead: [
+    "hideMastheadMenu",
+    "hideMastheadLogo",
+    "hideMastheadSearch",
+    "hideMastheadMic",
+    "hideMastheadUpload",
+    "hideMastheadNotifications",
+    "hideMastheadAvatar",
+  ],
+  hideSecondary: [
+    "hideRelated",
+    "hideLiveChat",
+    "hideWatchPlaylist",
+    "hideFundraiser",
+    "hideAutoplayCard",
+    "hideRelatedAds",
+    "hideRelatedShorts",
+    "hideRelatedChips",
+  ],
+  hideComments: [
+    "hideCommentBox",
+    "hideCommentAvatars",
+    "hideCommentLikes",
+    "hideCommentReplies",
+    "hideCommentHearts",
+    "hideCommentBadges",
+    "hideCommentPinned",
+    "hideCommentSort",
+    "hideCommentHeader",
+    "hideCommentTime",
+  ],
 };
 
 const form = document.querySelector("form");
-const tabs = document.querySelectorAll(".tab");
+const picker = document.querySelector(".picker");
+const pickerButton = picker.querySelector(".picker-button");
+const pickerMenu = picker.querySelector(".picker-menu");
+const pickerLabel = picker.querySelector(".picker-label");
+const menuItems = picker.querySelectorAll(".menu-item");
 const PANEL_KEY = "ytc-panel";
+
+function setMenuOpen(open) {
+  picker.classList.toggle("is-open", open);
+  pickerButton.setAttribute("aria-expanded", String(open));
+  pickerMenu.hidden = !open;
+}
 
 function showPanel(id) {
   const panel = form.querySelector(`fieldset[data-panel="${id}"]`);
-  if (!panel) return;
-  for (const tab of tabs) {
-    const active = tab.dataset.panel === id;
-    tab.classList.toggle("is-active", active);
-    tab.setAttribute("aria-selected", String(active));
+  if (!panel) {
+    if (id !== "home") showPanel("home");
+    return;
+  }
+  for (const item of menuItems) {
+    const active = item.dataset.panel === id;
+    item.classList.toggle("is-active", active);
+    item.setAttribute("aria-selected", String(active));
+    if (active) pickerLabel.textContent = item.dataset.label || item.textContent.trim();
   }
   for (const fieldset of form.querySelectorAll("fieldset")) {
     fieldset.hidden = fieldset.dataset.panel !== id;
   }
+  setMenuOpen(false);
   sessionStorage.setItem(PANEL_KEY, id);
 }
 
-for (const tab of tabs) {
-  tab.addEventListener("click", () => showPanel(tab.dataset.panel));
+pickerButton.addEventListener("click", () => setMenuOpen(pickerMenu.hidden));
+
+for (const item of menuItems) {
+  item.addEventListener("click", () => showPanel(item.dataset.panel));
 }
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") setMenuOpen(false);
+});
 
 showPanel(sessionStorage.getItem(PANEL_KEY) || "home");
 

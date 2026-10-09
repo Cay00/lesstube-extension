@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 
 <head>
   <meta charset="utf-8" />
   <title>YouTube Customizer</title>
   <style>
     :root {
-      color-scheme: light;
-      --bg: #f8f8f8;
-      --surface: #ffffff;
-      --text: #181818;
-      --muted: #737373;
-      --border: #e7e7e7;
+      color-scheme: dark;
+      --bg: #0f0f0f;
+      --surface: #1c1c1c;
+      --raised: #262626;
+      --text: #f1f1f1;
+      --muted: #a3a3a3;
+      --border: #333333;
       --accent: #ff0033;
-      --accent-soft: #fff0f2;
       --radius: 10px;
     }
 
@@ -30,47 +30,96 @@
       background: var(--bg);
     }
 
-    .tabs {
-      display: flex;
-      gap: 2px;
-      padding: 0 10px;
+    .picker {
+      position: relative;
+      padding: 10px 12px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      overflow-x: auto;
-      scrollbar-width: none;
     }
 
-    .tabs::-webkit-scrollbar {
-      display: none;
-    }
-
-    .tab {
+    .picker-button,
+    .menu-item,
+    .fold-toggle,
+    .more {
       appearance: none;
       margin: 0;
-      padding: 11px 10px 9px;
       border: 0;
-      border-bottom: 2px solid transparent;
-      background: transparent;
-      color: var(--muted);
       font: inherit;
-      font-size: 12px;
-      font-weight: 650;
-      white-space: nowrap;
       cursor: pointer;
     }
 
-    .tab:hover {
+    .picker-button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--raised);
       color: var(--text);
+      font-weight: 650;
     }
 
-    .tab.is-active {
-      color: var(--text);
-      border-bottom-color: var(--accent);
+    .picker-button::after {
+      content: "";
+      width: 7px;
+      height: 7px;
+      margin-left: 12px;
+      border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted);
+      transform: translateY(-2px) rotate(45deg);
     }
 
-    .tab:focus-visible {
-      outline: 2px solid #ff6680;
-      outline-offset: -2px;
+    .picker.is-open .picker-button::after {
+      transform: translateY(2px) rotate(225deg);
+    }
+
+    .picker-menu {
+      position: absolute;
+      z-index: 2;
+      top: calc(100% - 4px);
+      left: 12px;
+      right: 12px;
+      display: grid;
+      padding: 4px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #212121;
+      box-shadow: 0 10px 28px rgb(0 0 0 / 45%);
+    }
+
+    .picker-menu[hidden] {
+      display: none;
+    }
+
+    .menu-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text);
+      text-align: left;
+    }
+
+    .menu-item:hover,
+    .menu-item.is-active {
+      background: var(--raised);
+    }
+
+    .menu-item.is-active {
+      color: #fff;
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+
+    .menu-label {
+      margin: 6px 10px 2px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .menu-label:first-child {
+      margin-top: 4px;
     }
 
     form {
@@ -80,7 +129,7 @@
       overflow-y: auto;
       padding: 14px;
       scrollbar-width: thin;
-      scrollbar-color: #c9c9c9 transparent;
+      scrollbar-color: #4a4a4a transparent;
     }
 
     fieldset[hidden] {
@@ -98,7 +147,6 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       background: var(--surface);
-      box-shadow: 0 1px 2px rgb(0 0 0 / 3%);
     }
 
     legend {
@@ -114,15 +162,15 @@
       display: flex;
       align-items: center;
       gap: 9px;
-      min-height: 32px;
-      padding: 5px 7px;
+      min-height: 36px;
+      padding: 7px 8px;
       border-radius: 6px;
       cursor: pointer;
       transition: background 120ms ease;
     }
 
     label:hover {
-      background: #f5f5f5;
+      background: var(--raised);
     }
 
     label:has(input:disabled) {
@@ -139,9 +187,9 @@
       width: 16px;
       height: 16px;
       margin: 0;
-      border: 1px solid #c8c8c8;
+      border: 1px solid #5a5a5a;
       border-radius: 4px;
-      background: #fff;
+      background: #141414;
       cursor: pointer;
       display: grid;
       place-items: center;
@@ -177,9 +225,9 @@
       min-width: 90px;
       margin-left: auto;
       padding: 6px 27px 6px 9px;
-      border: 1px solid #dedede;
+      border: 1px solid #4a4a4a;
       border-radius: 7px;
-      background-color: #fafafa;
+      background-color: #141414;
       color: var(--text);
       font: inherit;
       cursor: pointer;
@@ -187,7 +235,7 @@
     }
 
     select:hover {
-      border-color: #bdbdbd;
+      border-color: #6a6a6a;
     }
 
     select:focus {
@@ -201,29 +249,27 @@
       gap: 1px;
       margin: 0 0 5px 13px;
       padding-left: 9px;
-      border-left: 2px solid #ededed;
+      border-left: 2px solid #3a3a3a;
     }
 
     .sub label {
-      min-height: 29px;
-      padding: 4px 6px;
-      color: #484848;
+      min-height: 28px;
+      padding: 3px 6px;
+      color: #d4d4d4;
     }
 
     /* Nagłówki podsekcji */
 
     .group {
-      margin: 10px 0 2px;
-      padding: 0 7px;
-      color: #777;
-      font-size: 10px;
-      font-weight: 750;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
+      margin: 14px 0 4px;
+      padding: 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
     }
 
     .group:first-of-type {
-      margin-top: 5px;
+      margin-top: 2px;
     }
 
     /* Przewijanie */
@@ -234,11 +280,11 @@
 
     form::-webkit-scrollbar-thumb {
       border-radius: 10px;
-      background: #c9c9c9;
+      background: #4a4a4a;
     }
 
     form::-webkit-scrollbar-thumb:hover {
-      background: #a8a8a8;
+      background: #6a6a6a;
     }
 
     .header {
@@ -281,27 +327,34 @@
   <header class="header">
     <div>
       <strong>YouTube Customizer</strong>
-      <small>Dostosuj swój YouTube</small>
+      <small>Customize your YouTube</small>
     </div>
   </header>
-  <nav class="tabs" aria-label="Ustawienia">
-    <button type="button" class="tab is-active" data-panel="home" aria-selected="true">Strona główna</button>
-    <button type="button" class="tab" data-panel="sidebar" aria-selected="false">Lewy pasek</button>
-  </nav>
+  <div class="picker">
+    <button type="button" class="picker-button" aria-expanded="false" aria-haspopup="listbox">
+      <span class="picker-label">Home</span>
+    </button>
+    <div class="picker-menu" role="listbox" hidden>
+      <button type="button" class="menu-item is-active" data-panel="home" role="option" aria-selected="true">Home</button>
+      <button type="button" class="menu-item" data-panel="sidebar" role="option" aria-selected="false">Guide</button>
+      <button type="button" class="menu-item" data-panel="masthead" role="option" aria-selected="false">Top bar</button>
+      <button type="button" class="menu-item" data-panel="watch" role="option" aria-selected="false">Watch page</button>
+    </div>
+  </div>
   <form>
     <fieldset data-panel="home">
       <label>
-        Przekierowanie główne
+        Home redirect
         <select name="homeRedirect">
-          <option value="home">Strona główna</option>
-          <option value="subscriptions">Subskrypcje</option>
-          <option value="history">Historia</option>
-          <option value="library">Biblioteka</option>
+          <option value="home">Home</option>
+          <option value="subscriptions">Subscriptions</option>
+          <option value="history">History</option>
+          <option value="library">Library</option>
         </select>
       </label>
-      <label><input type="checkbox" name="hideSuggestions" /> Ukryj sugestie</label>
+      <label><input type="checkbox" name="hideSuggestions" /> Hide suggestions</label>
       <label>
-        Kolumny
+        Columns
         <select name="columns">
           <option value="3">3</option>
           <option value="4" selected>4</option>
@@ -310,62 +363,161 @@
           <option value="7">7</option>
         </select>
       </label>
-      <label><input type="checkbox" name="hideMixes" /> Ukryj playlisty i składanki</label>
-      <label><input type="checkbox" name="hideAds" /> Ukryj reklamy</label>
-      <label><input type="checkbox" name="hideShorts" /> Ukryj Shorts</label>
-      <label><input type="checkbox" name="hideGames" /> Ukryj Pokój gier</label>
+      <label><input type="checkbox" name="hideMixes" /> Hide playlists and mixes</label>
+      <label><input type="checkbox" name="hideAds" /> Hide ads</label>
+      <label><input type="checkbox" name="hideShorts" /> Hide Shorts</label>
+      <label><input type="checkbox" name="hideGames" /> Hide Playables</label>
     </fieldset>
 
     <fieldset data-panel="sidebar" hidden>
-      <p class="group">Główne</p>
-      <label><input type="checkbox" name="hideHomeSection" /> Ukryj całą sekcję</label>
+      <p class="group">Main</p>
+      <label><input type="checkbox" name="hideHomeSection" /> Hide entire section</label>
       <div class="sub">
-        <label><input type="checkbox" name="hideGuideHome" /> Strona główna</label>
+        <label><input type="checkbox" name="hideGuideHome" /> Home</label>
         <label><input type="checkbox" name="hideGuideShorts" /> Shorts</label>
       </div>
-      <p class="group">Subskrypcje</p>
-      <label><input type="checkbox" name="hideSubscriptionsSection" /> Ukryj całą sekcję</label>
+      <p class="group">Subscriptions</p>
+      <label><input type="checkbox" name="hideSubscriptionsSection" /> Hide entire section</label>
       <div class="sub">
-        <label><input type="checkbox" name="hideGuideSubscriptions" /> Subskrypcje</label>
-        <label><input type="checkbox" name="expandSubscriptions" /> Rozwiń wszystkie</label>
+        <label><input type="checkbox" name="hideGuideSubscriptions" /> Subscriptions</label>
+        <label><input type="checkbox" name="expandSubscriptions" /> Expand all</label>
       </div>
-      <p class="group">Ty</p>
-      <label><input type="checkbox" name="hideLibrarySection" /> Ukryj całą sekcję</label>
+      <p class="group">You</p>
+      <label><input type="checkbox" name="hideLibrarySection" /> Hide entire section</label>
       <div class="sub">
-        <label><input type="checkbox" name="hideGuideYou" /> Ty</label>
-        <label><input type="checkbox" name="hideGuideChannel" /> Twój kanał</label>
-        <label><input type="checkbox" name="hideGuideHistory" /> Historia</label>
-        <label><input type="checkbox" name="hideGuidePlaylists" /> Playlisty</label>
-        <label><input type="checkbox" name="hideGuideWatchLater" /> Do obejrzenia</label>
-        <label><input type="checkbox" name="hideGuideLiked" /> Polubione filmy</label>
-        <label><input type="checkbox" name="hideGuideYourVideos" /> Twoje filmy</label>
-        <label><input type="checkbox" name="hideGuideDownloads" /> Pobrane</label>
-        <label><input type="checkbox" name="hideGuideCourses" /> Kursy</label>
-        <label><input type="checkbox" name="hideGuideClips" /> Klipy</label>
-        <label><input type="checkbox" name="hideGuideLibraryShowMore" /> Pokaż mniej</label>
+        <label><input type="checkbox" name="hideGuideYou" /> You</label>
+        <label><input type="checkbox" name="hideGuideChannel" /> Your channel</label>
+        <label><input type="checkbox" name="hideGuideHistory" /> History</label>
+        <label><input type="checkbox" name="hideGuidePlaylists" /> Playlists</label>
+        <label><input type="checkbox" name="hideGuideWatchLater" /> Watch later</label>
+        <label><input type="checkbox" name="hideGuideLiked" /> Liked videos</label>
+        <label><input type="checkbox" name="hideGuideYourVideos" /> Your videos</label>
+        <label><input type="checkbox" name="hideGuideDownloads" /> Downloads</label>
+        <label><input type="checkbox" name="hideGuideCourses" /> Courses</label>
+        <label><input type="checkbox" name="hideGuideClips" /> Clips</label>
+        <label><input type="checkbox" name="hideGuideLibraryShowMore" /> Show less</label>
       </div>
-      <p class="group">Odkrywaj</p>
-      <label><input type="checkbox" name="hideExploreSection" /> Ukryj całą sekcję</label>
+      <p class="group">Explore</p>
+      <label><input type="checkbox" name="hideExploreSection" /> Hide entire section</label>
       <div class="sub">
-        <label><input type="checkbox" name="hideGuideExploreMusic" /> Muzyka</label>
-        <label><input type="checkbox" name="hideGuideMovies" /> Filmy</label>
-        <label><input type="checkbox" name="hideGuideHype" /> Podbijanie</label>
-        <label><input type="checkbox" name="hideGuideLive" /> Na żywo</label>
-        <label><input type="checkbox" name="hideGuideGaming" /> Gry</label>
-        <label><input type="checkbox" name="hideGuideNews" /> Wiadomości</label>
-        <label><input type="checkbox" name="hideGuideSports" /> Sport</label>
-        <label><input type="checkbox" name="hideGuidePodcasts" /> Podcasty</label>
-        <label><input type="checkbox" name="hideGuidePlayables" /> Pokój gier</label>
-        <label><input type="checkbox" name="hideGuideSupport" /> Wspieranie kanału</label>
-        <label><input type="checkbox" name="hideGuideExploreShowMore" /> Pokaż mniej</label>
+        <label><input type="checkbox" name="hideGuideExploreMusic" /> Music</label>
+        <label><input type="checkbox" name="hideGuideMovies" /> Movies</label>
+        <label><input type="checkbox" name="hideGuideHype" /> Hype</label>
+        <label><input type="checkbox" name="hideGuideLive" /> Live</label>
+        <label><input type="checkbox" name="hideGuideGaming" /> Gaming</label>
+        <label><input type="checkbox" name="hideGuideNews" /> News</label>
+        <label><input type="checkbox" name="hideGuideSports" /> Sports</label>
+        <label><input type="checkbox" name="hideGuidePodcasts" /> Podcasts</label>
+        <label><input type="checkbox" name="hideGuidePlayables" /> Playables</label>
+        <label><input type="checkbox" name="hideGuideSupport" /> Channel support</label>
+        <label><input type="checkbox" name="hideGuideExploreShowMore" /> Show less</label>
       </div>
-      <p class="group">Więcej z YouTube</p>
-      <label><input type="checkbox" name="hideMoreSection" /> Ukryj całą sekcję</label>
+      <p class="group">More from YouTube</p>
+      <label><input type="checkbox" name="hideMoreSection" /> Hide entire section</label>
       <div class="sub">
         <label><input type="checkbox" name="hideGuideMusic" /> YouTube Music</label>
         <label><input type="checkbox" name="hideGuideKids" /> YouTube Kids</label>
-        <label><input type="checkbox" name="hideGuideReports" /> Historia zgłoszeń</label>
-        <label><input type="checkbox" name="hideGuideFooter" /> Stopka</label>
+        <label><input type="checkbox" name="hideGuideReports" /> Report history</label>
+        <label><input type="checkbox" name="hideGuideFooter" /> Footer</label>
+      </div>
+    </fieldset>
+
+    <fieldset data-panel="masthead" hidden>
+      <p class="group">Top bar</p>
+      <label><input type="checkbox" name="hideMasthead" /> Hide entire bar</label>
+      <div class="sub">
+        <label><input type="checkbox" name="hideMastheadMenu" /> Hide hamburger menu</label>
+        <label><input type="checkbox" name="hideMastheadLogo" /> Hide logo</label>
+        <label><input type="checkbox" name="hideMastheadSearch" /> Hide search bar</label>
+        <label><input type="checkbox" name="hideMastheadMic" /> Hide microphone</label>
+        <label><input type="checkbox" name="hideMastheadUpload" /> Hide upload</label>
+        <label><input type="checkbox" name="hideMastheadNotifications" /> Hide notifications</label>
+        <label><input type="checkbox" name="hideMastheadAvatar" /> Hide avatar</label>
+      </div>
+      <label><input type="checkbox" name="hideSearchSuggestions" /> Turn off search suggestions</label>
+    </fieldset>
+
+    <fieldset data-panel="watch" hidden>
+      <p class="group">Sidebar</p>
+      <label><input type="checkbox" name="hideSecondary" /> Hide entire sidebar</label>
+      <div class="sub">
+        <label><input type="checkbox" name="hideRelated" /> Hide related videos</label>
+        <label><input type="checkbox" name="hideLiveChat" /> Hide live chat</label>
+        <label><input type="checkbox" name="hideWatchPlaylist" /> Hide playlist</label>
+        <label><input type="checkbox" name="hideFundraiser" /> Hide fundraiser</label>
+        <label><input type="checkbox" name="hideAutoplayCard" /> Hide Up next card</label>
+        <label><input type="checkbox" name="hideRelatedAds" /> Hide ads in related</label>
+        <label><input type="checkbox" name="hideRelatedShorts" /> Hide Shorts in related</label>
+        <label><input type="checkbox" name="hideRelatedChips" /> Hide related filters</label>
+      </div>
+      <p class="group">Player</p>
+      <label><input type="checkbox" name="hideEndscreen" /> Hide end screen suggestions</label>
+      <label><input type="checkbox" name="hideEndCards" /> Hide end cards</label>
+      <label><input type="checkbox" name="hideInfoCards" /> Hide info cards</label>
+      <label><input type="checkbox" name="hidePlayerTime" /> Hide video time</label>
+      <label><input type="checkbox" name="hideHeatmap" /> Hide most replayed graph</label>
+      <label><input type="checkbox" name="autoTheater" /> Automatic theater mode</label>
+      <label><input type="checkbox" name="hidePaidPromotion" /> Hide “Includes paid promotion”</label>
+      <label><input type="checkbox" name="hideCaptions" /> Hide on-video captions</label>
+      <label><input type="checkbox" name="hideAnnotations" /> Hide annotations</label>
+      <label><input type="checkbox" name="hideProgressBar" /> Hide progress bar</label>
+      <label><input type="checkbox" name="hidePlayerTitle" /> Hide title in the player</label>
+      <p class="group">Player buttons</p>
+      <label><input type="checkbox" name="hidePlayButton" /> Play / pause</label>
+      <label><input type="checkbox" name="hideReplayButton" /> Replay</label>
+      <label><input type="checkbox" name="hideNextButton" /> Next video</label>
+      <label><input type="checkbox" name="hidePrevButton" /> Previous video</label>
+      <label><input type="checkbox" name="hideVolume" /> Volume</label>
+      <label><input type="checkbox" name="hideChapters" /> Chapters</label>
+      <label><input type="checkbox" name="hideAutonavButton" /> Autoplay</label>
+      <label><input type="checkbox" name="hideSubtitlesButton" /> Subtitles</label>
+      <label><input type="checkbox" name="hideSettingsButton" /> Settings</label>
+      <label><input type="checkbox" name="hideMiniplayer" /> Miniplayer</label>
+      <label><input type="checkbox" name="hideTheaterButton" /> Theater mode</label>
+      <label><input type="checkbox" name="hideFullscreen" /> Full screen</label>
+      <label><input type="checkbox" name="hideAirplay" /> AirPlay</label>
+      <label><input type="checkbox" name="hideMoreFromChannel" /> More from this channel</label>
+      <p class="group">Details</p>
+      <label><input type="checkbox" name="hideVideoTitle" /> Hide video title</label>
+      <label><input type="checkbox" name="hideChannelAvatar" /> Hide channel avatar</label>
+      <label><input type="checkbox" name="hideChannelName" /> Hide channel name</label>
+      <label><input type="checkbox" name="hideSubCount" /> Hide subscriber count</label>
+      <label><input type="checkbox" name="hideFundraiserBadge" /> Hide fundraiser badge</label>
+      <label><input type="checkbox" name="hideVerifiedBadge" /> Hide verified badge</label>
+      <label><input type="checkbox" name="hideLicenseRow" /> Hide license and metadata row</label>
+      <label><input type="checkbox" name="hideOffers" /> Hide merch, tickets, and offers</label>
+      <label><input type="checkbox" name="hideSubscribe" /> Hide subscribe button</label>
+      <label><input type="checkbox" name="hideJoin" /> Hide Join button</label>
+      <label><input type="checkbox" name="hideNotifyBell" /> Hide notification bell</label>
+      <label><input type="checkbox" name="hideLikeBar" /> Hide likes</label>
+      <label><input type="checkbox" name="hideShare" /> Hide share</label>
+      <label><input type="checkbox" name="hideDownload" /> Hide download</label>
+      <label><input type="checkbox" name="hideSave" /> Hide save</label>
+      <label><input type="checkbox" name="hideClip" /> Hide clip</label>
+      <label><input type="checkbox" name="hideThanks" /> Hide Super Thanks</label>
+      <label><input type="checkbox" name="hideMoreActions" /> Hide more menu</label>
+      <p class="group">Description</p>
+      <label><input type="checkbox" name="hideDescription" /> Hide description</label>
+      <label><input type="checkbox" name="expandDescription" /> Auto-expand description</label>
+      <label><input type="checkbox" name="hideViewCount" /> Hide view count</label>
+      <label><input type="checkbox" name="hidePublishDate" /> Hide publish date</label>
+      <label><input type="checkbox" name="hideHashtags" /> Hide hashtags</label>
+      <label><input type="checkbox" name="hideChannelInfo" /> Hide channel info</label>
+      <label><input type="checkbox" name="hideDescriptionChapters" /> Hide chapters in the description</label>
+      <label><input type="checkbox" name="hideTranscript" /> Hide transcript</label>
+      <p class="group">Comments</p>
+      <label><input type="checkbox" name="hideComments" /> Hide entire section</label>
+      <div class="sub">
+        <label><input type="checkbox" name="hideCommentBox" /> Hide comment box</label>
+        <label><input type="checkbox" name="hideCommentAvatars" /> Hide avatars</label>
+        <label><input type="checkbox" name="hideCommentLikes" /> Hide likes</label>
+        <label><input type="checkbox" name="hideCommentReplies" /> Hide replies</label>
+        <label><input type="checkbox" name="hideCommentHearts" /> Hide creator hearts</label>
+        <label><input type="checkbox" name="hideCommentBadges" /> Hide badges</label>
+        <label><input type="checkbox" name="hideCommentPinned" /> Hide pinned label</label>
+        <label><input type="checkbox" name="hideCommentSort" /> Hide sort</label>
+        <label><input type="checkbox" name="hideCommentHeader" /> Hide header and count</label>
+        <label><input type="checkbox" name="hideCommentTime" /> Hide comment time</label>
       </div>
     </fieldset>
   </form>
