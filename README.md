@@ -47,11 +47,18 @@
 - **Personalize YouTube** — hide or restyle supported page elements.
 - **Element picker** — select elements directly on the page.
 - **Import and export settings** — back up or transfer your configuration.
-- **English and Polish interface.**
+- **Multilingual interface** — available in English, Arabic, Chinese (Simplified), French, Hindi, Indonesian, Japanese, Korean, German, Polish, Portuguese (Brazil), Russian, and Spanish.
 
 ## Installation
 
-### Load unpacked
+### From the Chrome Web Store
+
+**LessTube is not yet available on the Chrome Web Store.** The extension will be available here once the review process is complete.
+
+<!-- Replace the placeholder below after publication. -->
+<!-- [Install LessTube](CHROME_WEB_STORE_URL) -->
+
+### Manual installation
 
 1. Clone or download this repository.
 2. Open `chrome://extensions` in Chrome.
@@ -59,7 +66,7 @@
 4. Click **Load unpacked**.
 5. Select the LessTube project directory.
 
-Open YouTube and configure the extension using the LessTube popup.
+Manual installation is intended for testing and development.
 
 ## Development
 
