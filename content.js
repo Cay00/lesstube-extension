@@ -419,8 +419,26 @@
     element.dataset.ytcPart = part;
   }
 
+  const POPUP_ROOT = "ytd-popup-container, ytd-menu-popup-renderer, yt-sheet-view-model, yt-contextual-sheet-layout, tp-yt-iron-dropdown, tp-yt-paper-dialog";
+
   function labelOf(element) {
-    return (element.getAttribute("aria-label") || element.getAttribute("title") || element.innerText || "").replace(/\s+/g, " ").trim();
+    const aria = element.getAttribute("aria-label") || element.getAttribute("title") || "";
+    if (aria) return aria.replace(/\s+/g, " ").trim();
+    // innerText of an open button includes the menu, which would retag the button and close it.
+    if (element.closest(POPUP_ROOT)) return "";
+    return (element.innerText || "").replace(/\s+/g, " ").trim().slice(0, 80);
+  }
+
+  function pageMenuOpen() {
+    if (playerPopupOpen()) return true;
+    const open = document.querySelectorAll(
+      "ytd-menu-popup-renderer, yt-sheet-view-model, yt-contextual-sheet-layout, tp-yt-paper-dialog, tp-yt-iron-dropdown"
+    );
+    for (const popup of open) {
+      if (popup.getAttribute("aria-hidden") === "true" || popup.hasAttribute("hidden")) continue;
+      if (isShown(popup)) return true;
+    }
+    return false;
   }
 
   const cleanText = (node) => (node.textContent || "").replace(/\s+/g, " ").trim();
@@ -461,6 +479,7 @@
     );
     for (const scope of scopes) {
       for (const button of scope.querySelectorAll("button, yt-button-shape, a, tp-yt-paper-button")) {
+        if (button.closest(POPUP_ROOT)) continue;
         const label = labelOf(button);
         if (!label) continue;
         if (MORE_CHANNEL_RE.test(label)) {
@@ -656,8 +675,12 @@
 
   function run() {
     scheduled = false;
+    // Opening Save, the bell, Subscribe or the ⋯ menu adds DOM nodes. Clicking or
+    // rewriting those buttons in the same turn makes YouTube close the menu at once.
+    const menuOpen = pageMenuOpen();
     try {
       updateGrids();
+      if (menuOpen) return;
       if (full || E.hideShorts || E.hideGames) markWidgets();
       if (full || E.expandSubscriptions || GUIDE_KEYS.some((k) => E[k])) markGuide();
       if (full || E.hideMastheadUpload || E.hideMasthead) hideUploadButton();
@@ -665,7 +688,7 @@
       if (full || E.hideEndscreen) hideEndscreen();
       applyWatchBehaviors();
     } finally {
-      full = false;
+      if (!menuOpen) full = false;
     }
   }
 

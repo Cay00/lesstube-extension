@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "__MSG_extName__",
-  "short_name": "YT Customizer",
+  "name": "LessTube — YouTube Cleaner & Customizer",
+  "short_name": "LessTube",
   "version": "0.2.0",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
@@ -14,7 +14,7 @@
   },
   "permissions": ["storage"],
   "action": {
-    "default_title": "__MSG_extName__",
+    "default_title": "LessTube — YouTube Cleaner & Customizer",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

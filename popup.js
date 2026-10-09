@@ -188,7 +188,7 @@
       : h("p", { class: "note" }, t("noneHidden"));
 
     const langSelect = h("select", { "aria-label": t("language") });
-    for (const [value, label] of [["auto", t("langAuto")], ["en", "English"], ["pl", "Polski"]]) langSelect.append(h("option", { value }, label));
+    for (const [value, label] of [["auto", t("langAuto")], ...Y.LANGS]) langSelect.append(h("option", { value }, label));
     langSelect.value = settings.uiLang;
     langSelect.addEventListener("change", () => {
       settings.uiLang = langSelect.value;
@@ -321,6 +321,7 @@
 
   function applyStaticText() {
     document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     $("#subtitle").textContent = t("subtitle");
     $("#q").placeholder = t("search");
     $("#q").setAttribute("aria-label", t("search"));
