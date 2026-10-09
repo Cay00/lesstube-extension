@@ -8,7 +8,7 @@ LessTube is a lightweight Chrome extension that lets you customize the YouTube i
 
 <!-- Replace these paths with your actual screenshots. -->
 <p align="center">
-  <img src="screenshots/settings.png" width="32%" alt="LessTube settings popup" />
+  <img src="img/promo-marquee-1400x560.png" width="32%" alt="LessTube settings popup" />
   <img src="screenshots/customized-youtube.png" width="32%" alt="Customized YouTube interface" />
   <img src="screenshots/clean-layout.png" width="32%" alt="YouTube with a cleaner layout" />
 </p>
