@@ -4,15 +4,16 @@
   const Y = globalThis.YTC;
   const $ = (selector) => document.querySelector(selector);
 
+  const APP_NAME = chrome.runtime.getManifest().short_name || chrome.runtime.getManifest().name;
+  const PICK_TEXT = ["pickHint", "pickHide", "pickParent", "pickCancel", "pickDone"]; // strings the in-page picker needs
+
   const TOOLS_ICON = '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>';
 
   let settings = Y.normalize({});
   let lang = "en";
   let current = "home";
   let query = "";
-
-  const MASTER_OF = {};
-  for (const [master, kids] of Object.entries(Y.GROUPS)) for (const key of kids) MASTER_OF[key] = master;
+  let searchIndex = null; // built on first search, dropped when the UI language changes
 
   /* ------------------------------------------------------------- helpers */
 
@@ -55,7 +56,7 @@
     chrome.storage.local.set(patch);
   }
 
-  const isLocked = (key) => Boolean(MASTER_OF[key] && settings[MASTER_OF[key]]);
+  const isLocked = (key) => Boolean(Y.MASTER_OF[key] && settings[Y.MASTER_OF[key]]);
 
   /* --------------------------------------------------------------- rows */
 
@@ -127,20 +128,28 @@
     return nodes;
   }
 
-  function renderSearch(q) {
-    const needle = q.toLowerCase();
-    const hits = [];
+  // Matches English, Polish and the language the popup is shown in.
+  function buildSearchIndex() {
+    const words = (label) => (label ? [label.en, label.pl, tx(label)] : []);
+    const index = [];
     for (const panel of Y.PANELS) {
       for (const section of panel.sections) {
-        const list = (section.master ? [section.master] : []).concat(section.items);
-        for (const item of list) {
-          const hay = [item.label.en, item.label.pl, item.hint ? item.hint.en : "", item.hint ? item.hint.pl : "", section.title.en, section.title.pl, panel.title.en, panel.title.pl]
-            .join(" ")
-            .toLowerCase();
-          if (hay.includes(needle)) hits.push(rowFor(item, { crumb: tx(panel.title) + " › " + tx(section.title) }));
+        for (const item of Y.itemsOf(section)) {
+          index.push({
+            item,
+            crumb: tx(panel.title) + " › " + tx(section.title),
+            hay: [item.label, item.hint, section.title, panel.title].flatMap(words).join(" ").toLowerCase(),
+          });
         }
       }
     }
+    return index;
+  }
+
+  function renderSearch(q) {
+    const needle = q.toLowerCase();
+    searchIndex = searchIndex || buildSearchIndex();
+    const hits = searchIndex.filter((entry) => entry.hay.includes(needle)).map((entry) => rowFor(entry.item, { crumb: entry.crumb }));
     if (!hits.length) return [h("p", { class: "empty" }, t("noResults", { q }))];
     return [h("h2", {}, "“" + q + "”"), h("p", { class: "lede" }, ""), h("section", { class: "sec" }, hits)];
   }
@@ -193,6 +202,7 @@
     langSelect.addEventListener("change", () => {
       settings.uiLang = langSelect.value;
       lang = Y.lang(settings.uiLang);
+      searchIndex = null;
       persist({ uiLang: settings.uiLang });
       applyStaticText();
       render();
@@ -220,7 +230,7 @@
         h("div", { class: "stack" },
           h("button", { type: "button", class: "btn danger wide", id: "reset", onclick: doReset }, t("reset")))),
 
-      h("p", { class: "foot" }, "Customizer for YouTube " + chrome.runtime.getManifest().version),
+      h("p", { class: "foot" }, APP_NAME + " " + chrome.runtime.getManifest().version),
     ];
   }
 
@@ -228,7 +238,8 @@
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs && tabs[0];
       if (!tab || tab.id == null) return toast(t("pickNeedTab"));
-      chrome.tabs.sendMessage(tab.id, { type: "ytc-pick" }, (response) => {
+      const ui = Object.fromEntries(PICK_TEXT.map((key) => [key, t(key)]));
+      chrome.tabs.sendMessage(tab.id, { type: "ytc-pick", ui }, (response) => {
         if (chrome.runtime.lastError || !response) return toast(t("pickNeedTab"));
         window.close();
       });
@@ -271,9 +282,7 @@
   function activeCount(panel) {
     let n = 0;
     for (const section of panel.sections) {
-      for (const item of (section.master ? [section.master] : []).concat(section.items)) {
-        if (item.type === "toggle" && settings[item.key]) n++;
-      }
+      for (const item of Y.itemsOf(section)) if (item.type === "toggle" && settings[item.key]) n++;
     }
     return n;
   }
@@ -322,6 +331,7 @@
   function applyStaticText() {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    $("#appName").textContent = document.title = APP_NAME;
     $("#subtitle").textContent = t("subtitle");
     $("#q").placeholder = t("search");
     $("#q").setAttribute("aria-label", t("search"));

@@ -21,7 +21,7 @@ LessTube is a lightweight Chrome extension that lets you customize the YouTube i
 - **Element picker** — select elements directly on the page, where supported.
 - **Import and export settings** — back up and transfer your configuration.
 - **Simple settings popup** — manage your preferences in one place.
-- **English and Polish localization.**
+- **13 interface languages** — English, Polish, Spanish, Portuguese, German, French, Russian, Japanese, Chinese, Korean, Hindi, Arabic and Indonesian.
 
 ## Installation
 
@@ -41,7 +41,8 @@ The project uses JavaScript, CSS, HTML, and Manifest V3.
 
 | File | Purpose |
 |---|---|
-| `shared.js` | Settings schema, CSS generation, import/export, and selector utilities |
+| `shared.js` | Settings schema (English + Polish labels), CSS generation, import/export, and selector utilities. Loaded on YouTube and in the popup |
+| `i18n.js` | Translations for the other interface languages, keyed by the English text. Popup only |
 | `content.js` | YouTube DOM manipulation, redirects, and element picker |
 | `style.css` | Layout and video grid styling |
 | `popup.html` | Extension settings interface |
@@ -52,7 +53,7 @@ The project uses JavaScript, CSS, HTML, and Manifest V3.
 
 ### Adding a setting
 
-Most settings can be added through a single entry in `shared.js`, including the setting key, English and Polish labels, and the associated selectors or CSS. The popup, styling, and import/export functionality use the shared settings schema.
+Most settings can be added through a single entry in `shared.js`, including the setting key, English and Polish labels, and the associated selectors or CSS. The popup, styling, and import/export functionality use the shared settings schema. To translate the new labels into the other languages, add an entry keyed by the English text to `i18n.js`; anything missing falls back to English.
 
 ## Privacy
 
