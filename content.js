@@ -1,5 +1,5 @@
 /*
- * LessTube – content script.
+ * YouTube Customizer – content script.
  * Most features are pure CSS generated from shared.js. This file handles what
  * CSS cannot do: localized labels, shadow DOM, collapsible guide sections,
  * redirects, autoplay / theater behaviour and the element picker.
@@ -12,17 +12,16 @@
 
   let S = Y.normalize({}); // saved settings
   let E = S; // effective settings (all off while paused)
-  let cssKey = null; // which toggles the generated stylesheet currently covers
+  let lang = Y.lang("auto");
   let full = true; // run every module once (after settings change / navigation)
   let storageLoaded = false;
   let scheduled = false;
-
-  const squish = (text) => (text || "").replace(/\s+/g, " ").trim();
 
   /* ------------------------------------------------------------ styles */
 
   const styleEl = document.createElement("style");
   styleEl.id = "ytc-style";
+  styleEl.textContent = Y.buildCss();
   const customEl = document.createElement("style");
   customEl.id = "ytc-custom";
   root.append(styleEl, customEl);
@@ -30,13 +29,7 @@
   function paint(settings) {
     S = Y.normalize(settings);
     E = S.enabled ? S : Y.allOff();
-    // Stylesheet only holds rules of the switched-on toggles; rebuilt when that set changes.
-    const on = Y.TOGGLES.filter((item) => E[item.key] === true).map((item) => item.key);
-    const key = on.join();
-    if (key !== cssKey) {
-      cssKey = key;
-      styleEl.textContent = Y.buildCss(E);
-    }
+    lang = Y.lang(S.uiLang);
     for (const item of Y.TOGGLES) root.classList.toggle(Y.cls(item.key), E[item.key] === true);
     root.classList.toggle("ytc-columns", E.columns > 0);
     root.style.setProperty("--ytc-columns", String(E.columns > 0 ? E.columns : 4));
@@ -77,16 +70,11 @@
   const BOX_PROPS = ["width", "max-width", "min-width", "margin", "margin-left", "margin-right", "flex-basis"];
 
   function clearInlineBox(element) {
-    if (!element.hasAttribute("style")) return; // nothing inline, nothing to clear
     for (const prop of BOX_PROPS) element.style.removeProperty(prop);
   }
 
   function fixGrid(grid) {
-    for (const [name, value] of Object.entries(gridVars())) {
-      if (grid.style.getPropertyValue(name) !== value || grid.style.getPropertyPriority(name) !== "important") {
-        grid.style.setProperty(name, value, "important");
-      }
-    }
+    for (const [name, value] of Object.entries(gridVars())) grid.style.setProperty(name, value, "important");
     const contents = grid.querySelector(":scope > #contents");
     if (!contents) return;
     clearInlineBox(contents);
@@ -101,10 +89,9 @@
   }
 
   function updateGrids() {
-    if (E.columns <= 0 && !full) return;
     const grids = document.querySelectorAll("ytd-rich-grid-renderer");
     if (E.columns > 0) grids.forEach(fixGrid);
-    else grids.forEach(resetGrid);
+    else if (full) grids.forEach(resetGrid);
   }
 
   /* ------------------------------------------------- Shorts / Playables */
@@ -115,7 +102,7 @@
   function shelfTitle(section) {
     for (const title of section.querySelectorAll("#title")) {
       if (title.closest("ytd-rich-item-renderer, ytd-rich-grid-media, ytd-reel-item-renderer")) continue;
-      const text = squish(title.textContent);
+      const text = title.textContent.replace(/\s+/g, " ").trim();
       if (text) return text;
     }
     return "";
@@ -157,7 +144,7 @@
     document.querySelectorAll("ytd-guide-entry-renderer, ytd-mini-guide-entry-renderer").forEach((entry) => {
       const link = entry.querySelector("a[href]");
       const href = link?.getAttribute("href") || "";
-      const title = squish(link?.getAttribute("title") || link?.textContent);
+      const title = (link?.getAttribute("title") || link?.textContent || "").replace(/\s+/g, " ").trim();
       markWidget(entry, widgetKind(title, [href]));
     });
   }
@@ -194,17 +181,21 @@
     { id: "showMore", titles: ["pokaż więcej", "pokaz wiecej", "pokaż mniej", "pokaz mniej", "show more", "show less"] },
   ];
 
-  /*
-   * Guide entry id <-> setting key: "watchLater" <-> "hideGuideWatchLater".
-   * Which entries belong to which section (and its master switch) is read from
-   * the schema in shared.js, so adding a guide toggle there is enough.
-   */
-  const guideFlag = (id) => "hideGuide" + id[0].toUpperCase() + id.slice(1);
-  const guideIdsOf = (master) =>
-    new Set(Y.GROUPS[master].filter((key) => key.startsWith("hideGuide")).map((key) => key[9].toLowerCase() + key.slice(10)));
-  const LIBRARY_GUIDE = guideIdsOf("hideLibrarySection");
-  const EXPLORE_GUIDE = guideIdsOf("hideExploreSection");
-  const MORE_GUIDE = guideIdsOf("hideMoreSection");
+  const HOME_GUIDE = new Set(["home", "shorts"]);
+  const LIBRARY_GUIDE = new Set(["you", "channel", "history", "playlists", "watchLater", "liked", "yourVideos", "downloads", "courses", "clips", "libraryShowMore"]);
+  const EXPLORE_GUIDE = new Set(["exploreMusic", "movies", "hype", "live", "gaming", "news", "sports", "podcasts", "playables", "support", "exploreShowMore"]);
+  const MORE_GUIDE = new Set(["music", "kids", "reports"]);
+
+  const GUIDE_FLAG = {
+    home: "hideGuideHome", shorts: "hideGuideShorts", subscriptions: "hideGuideSubscriptions", music: "hideGuideMusic",
+    kids: "hideGuideKids", you: "hideGuideYou", channel: "hideGuideChannel", history: "hideGuideHistory",
+    playlists: "hideGuidePlaylists", yourVideos: "hideGuideYourVideos", watchLater: "hideGuideWatchLater",
+    downloads: "hideGuideDownloads", clips: "hideGuideClips", liked: "hideGuideLiked", courses: "hideGuideCourses",
+    exploreMusic: "hideGuideExploreMusic", movies: "hideGuideMovies", hype: "hideGuideHype", live: "hideGuideLive",
+    gaming: "hideGuideGaming", news: "hideGuideNews", sports: "hideGuideSports", podcasts: "hideGuidePodcasts",
+    playables: "hideGuidePlayables", support: "hideGuideSupport", reports: "hideGuideReports",
+    libraryShowMore: "hideGuideLibraryShowMore", exploreShowMore: "hideGuideExploreShowMore",
+  };
 
   const GUIDE_KEYS = Y.TOGGLES.filter(
     (i) => Y.ITEM_PANEL[i.key] === "guide" && i.key !== "hideSidebar" && i.key !== "hideMiniGuide"
@@ -219,7 +210,7 @@
     } catch {
       url = null;
     }
-    const title = squish(entry.innerText || link?.getAttribute("title")).toLowerCase();
+    const title = (entry.innerText || link?.getAttribute("title") || "").replace(/\s+/g, " ").trim().toLowerCase();
     return { url, title };
   }
 
@@ -250,9 +241,13 @@
   }
 
   function guideHidden(id) {
-    const flag = id && guideFlag(id);
-    if (!flag || !(flag in E)) return false; // not a toggle (e.g. a plain "show more")
-    return E[flag] === true || E[Y.MASTER_OF[flag]] === true;
+    if (!id || !GUIDE_FLAG[id]) return false;
+    if (E.hideHomeSection === true && HOME_GUIDE.has(id)) return true;
+    if (E.hideSubscriptionsSection === true && (id === "subscriptions" || id === "subscriptionsShowMore")) return true;
+    if (E.hideLibrarySection === true && LIBRARY_GUIDE.has(id)) return true;
+    if (E.hideExploreSection === true && EXPLORE_GUIDE.has(id)) return true;
+    if (E.hideMoreSection === true && MORE_GUIDE.has(id)) return true;
+    return E[GUIDE_FLAG[id]] === true;
   }
 
   function isShown(element) {
@@ -261,15 +256,13 @@
     return style.display !== "none" && style.visibility !== "hidden" && element.getClientRects().length > 0;
   }
 
-  const SHOW_MORE = ["pokaż więcej", "show more"];
-  const SHOW_LESS = ["pokaż mniej", "show less"];
-
   function entryLabel(entry) {
-    return squish(entry.textContent).toLowerCase();
+    return (entry.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
   }
 
   function visibleGuideLabel(entry) {
-    return isShown(entry) ? squish(entry.innerText).toLowerCase() : "";
+    if (!isShown(entry)) return "";
+    return (entry.innerText || "").replace(/\s+/g, " ").trim().toLowerCase();
   }
 
   function setExpanded(collapsible, expand) {
@@ -281,9 +274,11 @@
     const ids = rows.filter((row) => row.section === section).map((row) => row.id);
     if (ids.includes("home") || ids.includes("shorts")) return false;
     const headerText = [...section.querySelectorAll("#header, #guide-section-title")]
-      .map((header) => squish(header.innerText).toLowerCase())
+      .map((header) => (header.innerText || "").replace(/\s+/g, " ").trim().toLowerCase())
       .join(" ");
-    if (/^(subskrypcje|subscriptions)( |$)/.test(headerText)) return true;
+    if (headerText === "subskrypcje" || headerText === "subscriptions" || headerText.startsWith("subskrypcje ") || headerText.startsWith("subscriptions ")) {
+      return true;
+    }
     return ids.includes("subscriptions") && !ids.some((id) => LIBRARY_GUIDE.has(id) || EXPLORE_GUIDE.has(id) || MORE_GUIDE.has(id));
   }
 
@@ -303,8 +298,10 @@
     }
     const buttons = [...section.querySelectorAll("ytd-guide-entry-renderer")]
       .map((entry) => ({ entry, text: visibleGuideLabel(entry) }))
-      .filter((item) => SHOW_MORE.includes(item.text) || SHOW_LESS.includes(item.text));
-    const button = buttons.find((item) => (expand ? SHOW_MORE : SHOW_LESS).includes(item.text));
+      .filter((item) => ["pokaż więcej", "show more", "pokaż mniej", "show less"].includes(item.text));
+    const showMore = buttons.find((item) => item.text === "pokaż więcej" || item.text === "show more");
+    const showLess = buttons.find((item) => item.text === "pokaż mniej" || item.text === "show less");
+    const button = expand ? showMore : showLess;
     if (!button) return;
     section.dataset.ytcToggleLock = "1";
     setTimeout(() => delete section.dataset.ytcToggleLock, 500);
@@ -330,7 +327,10 @@
       setExpanded(collapsible, true);
       collapsible.querySelectorAll("#expanded, #expandable-items").forEach((element) => element.removeAttribute("hidden"));
     }
-    const showMore = [...section.querySelectorAll("ytd-guide-entry-renderer")].find((entry) => SHOW_MORE.includes(entryLabel(entry)));
+    const showMore = [...section.querySelectorAll("ytd-guide-entry-renderer")].find((entry) => {
+      const text = entryLabel(entry);
+      return text === "pokaż więcej" || text === "show more";
+    });
     if (!showMore) return;
     section.dataset.ytcLibraryLock = "1";
     setTimeout(() => delete section.dataset.ytcLibraryLock, 500);
@@ -423,10 +423,10 @@
 
   function labelOf(element) {
     const aria = element.getAttribute("aria-label") || element.getAttribute("title") || "";
-    if (aria) return squish(aria);
+    if (aria) return aria.replace(/\s+/g, " ").trim();
     // innerText of an open button includes the menu, which would retag the button and close it.
     if (element.closest(POPUP_ROOT)) return "";
-    return squish(element.innerText).slice(0, 80);
+    return (element.innerText || "").replace(/\s+/g, " ").trim().slice(0, 80);
   }
 
   function pageMenuOpen() {
@@ -441,10 +441,12 @@
     return false;
   }
 
+  const cleanText = (node) => (node.textContent || "").replace(/\s+/g, " ").trim();
+
   // True when a smaller element inside `node` already carries the views or the date.
   function hasMatchingDescendant(node) {
     for (const child of node.querySelectorAll("*")) {
-      const text = squish(child.textContent);
+      const text = cleanText(child);
       if (text && text.length <= 80 && (VIEWS_RE.test(text) || DATE_RE.test(text))) return true;
     }
     return false;
@@ -459,7 +461,7 @@
     for (const node of nodes) {
       if (node.closest("ytd-comment-renderer, ytd-comments")) continue;
       // textContent, not innerText: the result must not change once part of the text is hidden.
-      const text = squish(node.textContent);
+      const text = cleanText(node);
       if (!text || text.length > 180) continue;
       const views = VIEWS_RE.test(text);
       const date = DATE_RE.test(text) || /^\d{1,2}\s+\p{L}+\.?\s+\d{4}$/u.test(text);
@@ -539,17 +541,6 @@
 
   /* ------------------------------------------- shadow-DOM aware scanners */
 
-  /** Un-hide targets that were not found on this pass (unless they should stay hidden and still exist). */
-  function releaseMissing(targets, found, hide, onRelease) {
-    for (const element of targets) {
-      if (found.has(element)) continue;
-      if (hide && element.isConnected) continue;
-      forceHide(element, false);
-      if (onRelease) onRelease(element);
-      targets.delete(element);
-    }
-  }
-
   function forEachDeep(rootNode, visit) {
     if (!rootNode?.querySelectorAll) return;
     for (const node of rootNode.querySelectorAll("*")) {
@@ -578,8 +569,8 @@
     if (masthead) {
       forEachDeep(masthead, (node) => {
         if (node.id === "avatar-btn") return;
-        const label = squish(node.getAttribute("aria-label"));
-        const text = node.childElementCount === 0 ? squish(node.textContent) : "";
+        const label = (node.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim();
+        const text = node.childElementCount === 0 ? (node.textContent || "").replace(/\s+/g, " ").trim() : "";
         if (!UPLOAD_RE.test(label) && !UPLOAD_RE.test(text)) return;
         const host = hostInLightDom(node, "ytd-topbar-menu-button-renderer, ytd-button-renderer, yt-button-view-model");
         if (!host || host.id === "avatar-btn" || host.closest?.("#avatar-btn")) return;
@@ -589,7 +580,13 @@
         forceHide(host, hide);
       });
     }
-    releaseMissing(uploadTargets, found, hide, (element) => delete element.dataset.ytcUpload);
+    for (const element of uploadTargets) {
+      if (found.has(element)) continue;
+      if (hide && element.isConnected) continue;
+      forceHide(element, false);
+      delete element.dataset.ytcUpload;
+      uploadTargets.delete(element);
+    }
   }
 
   const TRANSCRIPT_RE = /transkrypc|transcript|transkript|transcripci|transcrizione|transcrição|расшифровк|транскрипц/i;
@@ -615,8 +612,8 @@
           forceHide(node, hide);
           return;
         }
-        const label = squish(node.getAttribute("aria-label"));
-        const text = node.childElementCount === 0 ? squish(node.textContent) : "";
+        const label = (node.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim();
+        const text = node.childElementCount === 0 ? (node.textContent || "").replace(/\s+/g, " ").trim() : "";
         if ((!TRANSCRIPT_RE.test(label) && !TRANSCRIPT_RE.test(text)) || text.length > 48) return;
         const host = hostInLightDom(
           node,
@@ -629,9 +626,13 @@
         forceHide(host, hide);
       });
     }
-    releaseMissing(transcriptTargets, found, hide, (element) => {
+    for (const element of transcriptTargets) {
+      if (found.has(element)) continue;
+      if (hide && element.isConnected) continue;
+      forceHide(element, false);
       if (element.dataset.ytcPart === "transcript") delete element.dataset.ytcPart;
-    });
+      transcriptTargets.delete(element);
+    }
   }
 
   const endscreenTargets = new Set();
@@ -656,7 +657,12 @@
         forceHide(node, hide);
       });
     }
-    releaseMissing(endscreenTargets, found, hide);
+    for (const element of endscreenTargets) {
+      if (found.has(element)) continue;
+      if (hide && element.isConnected) continue;
+      forceHide(element, false);
+      endscreenTargets.delete(element);
+    }
   }
 
   /* ---------------------------------------------------------- scheduler */
@@ -701,9 +707,9 @@
 
   let picker = null;
 
-  // Translated by the popup and sent with the "ytc-pick" message, so this script needs no translation tables.
-  let pickerText = {};
-  const ui = (key) => pickerText[key] || Y.tr(Y.UI[key], "en");
+  function ui(key) {
+    return Y.tr(Y.UI[key], lang);
+  }
 
   function makeEl(tag, css, text) {
     const el = document.createElement(tag);
@@ -842,7 +848,6 @@
   try {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message && message.type === "ytc-pick") {
-        pickerText = (message.ui && typeof message.ui === "object" && message.ui) || {};
         startPicker();
         sendResponse({ ok: true });
       }
