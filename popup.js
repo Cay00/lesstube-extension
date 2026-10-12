@@ -208,15 +208,33 @@
       render();
     });
 
+    const devInput = h("input", { type: "checkbox", role: "switch", checked: settings.devMode === true });
+    devInput.addEventListener("change", () => {
+      settings.devMode = devInput.checked;
+      persist({ devMode: settings.devMode });
+      render();
+    });
+
+    const devOn = settings.devMode === true;
+
     return [
       h("h2", {}, t("tools")),
       h("p", { class: "lede" }, t("toolsDesc")),
 
-      h("section", { class: "sec" }, h("h3", {}, t("picker")), h("p", { class: "note" }, t("pickerHint")),
-        h("div", { class: "stack" },
-          h("button", { type: "button", class: "btn primary wide", id: "pick", onclick: startPick }, t("pick")),
-          h("div", { class: "adder" }, adder, h("button", { type: "button", class: "btn", onclick: addSelector }, t("add"))),
-          hiddenList)),
+      h("section", { class: "sec" },
+        h("label", { class: "row" },
+          h("span", { class: "txt" }, t("devMode")),
+          devInput,
+          h("span", { class: "track", "aria-hidden": "true" })),
+        devOn ? h("p", { class: "note" }, t("devModeHint")) : null),
+
+      devOn
+        ? h("section", { class: "sec" }, h("h3", {}, t("picker")), h("p", { class: "note" }, t("pickerHint")),
+            h("div", { class: "stack" },
+              h("button", { type: "button", class: "btn primary wide", id: "pick", onclick: startPick }, t("pick")),
+              h("div", { class: "adder" }, adder, h("button", { type: "button", class: "btn", onclick: addSelector }, t("add"))),
+              hiddenList))
+        : null,
 
       h("section", { class: "sec" }, h("h3", {}, t("backup")), h("p", { class: "note" }, t("backupHint")),
         h("div", { class: "stack" },
@@ -262,7 +280,7 @@
   function doImport(box) {
     const result = Y.decode(box.value);
     if (!result.ok) return toast(t("importBad"));
-    const next = Y.normalize(Object.assign({}, result.settings, { enabled: settings.enabled, uiLang: settings.uiLang }));
+    const next = Y.normalize(Object.assign({}, result.settings, { enabled: settings.enabled, uiLang: settings.uiLang, devMode: settings.devMode }));
     settings = next;
     persist(next);
     render();
@@ -271,7 +289,7 @@
 
   function doReset() {
     if (!window.confirm(t("resetConfirm"))) return;
-    settings = Y.normalize({ uiLang: settings.uiLang, enabled: settings.enabled });
+    settings = Y.normalize({ uiLang: settings.uiLang, enabled: settings.enabled, devMode: settings.devMode });
     persist(settings);
     render();
     toast(t("applied"));
@@ -324,7 +342,7 @@
     else if (current === "tools") nodes = renderTools();
     else nodes = renderPanel(Y.PANELS.find((p) => p.id === current) || Y.PANELS[0]);
     if (!settings.enabled) nodes.unshift(h("p", { class: "paused-note" }, t("pausedNote")));
-    main.replaceChildren(...nodes);
+    main.replaceChildren(...nodes.filter((node) => node != null));
     main.scrollTop = 0;
   }
 

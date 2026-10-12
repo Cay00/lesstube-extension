@@ -792,6 +792,11 @@
     applied: T("Applied", "Zastosowano"),
     picker: T("Hidden elements", "Ukryte elementy"),
     pickerHint: T("Remove anything on YouTube with a click.", "Usuń z YouTube dowolny element jednym kliknięciem."),
+    devMode: T("Developer mode", "Tryb deweloperski"),
+    devModeHint: T(
+      "Hiding by pointing at an element sometimes breaks the page. Turn this on only if you know what you are doing.",
+      "Ukrywanie przez wskazanie elementu czasem psuje stronę. Włączaj tylko wtedy, gdy wiesz, co robisz."
+    ),
     pick: T("Pick an element on the page", "Wskaż element na stronie"),
     pickNeedTab: T("Switch to a YouTube tab first (reload it if it was already open).", "Przejdź najpierw na kartę YouTube (odśwież ją, jeśli była już otwarta)."),
     selectorPlaceholder: T("or type a CSS selector", "albo wpisz selektor CSS"),
@@ -877,6 +882,7 @@
     out.customHide = cleanCustom(src.customHide, doc);
     out.enabled = src.enabled !== false;
     out.uiLang = ["auto", ...LANG_CODES].includes(src.uiLang) ? src.uiLang : "auto";
+    out.devMode = src.devMode === true;
     return out;
   }
 
