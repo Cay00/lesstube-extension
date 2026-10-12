@@ -459,9 +459,6 @@
               hide: [".ytp-heat-map-container", ".ytp-heat-map-chapter"],
             }),
             tg("hidePlayerTime", "Video time", "Czas filmu", { hide: [".ytp-time-display"] }),
-            tg("hideChapters", "Chapters", "Rozdziały", {
-              hide: [".ytp-chapter-container", ".ytp-chapter-title", ".ytp-chapter-hover-container"],
-            }),
           ],
         },
         {
@@ -572,7 +569,6 @@
           title: T("Action buttons", "Przyciski akcji"),
           items: [
             tg("hideSubscribe", "Subscribe", "Subskrybuj", { hide: ["ytd-watch-metadata #subscribe-button", '[data-ytc-part="subscribe"]'] }),
-            tg("hideNotifyBell", "Notification bell", "Dzwonek", { hide: ["ytd-watch-metadata #notification-preference-button", '[data-ytc-part="notify"]'] }),
             tg("hideJoin", "Join", "Dołącz", { hide: ["ytd-watch-metadata #sponsor-button", '[data-ytc-part="join"]'] }),
             tg("hideLikeBar", "Likes", "Polubienia", {
               hide: [
@@ -584,7 +580,6 @@
             }),
             tg("hideShare", "Share", "Udostępnij", { hide: ['[data-ytc-part="share"]'] }),
             tg("hideDownload", "Download", "Pobierz", { hide: ['[data-ytc-part="download"]'] }),
-            tg("hideSave", "Save", "Zapisz", { hide: ['[data-ytc-part="save"]'] }),
             tg("hideClip", "Clip", "Klip", { hide: ['[data-ytc-part="clip"]'] }),
             tg("hideThanks", "Super Thanks", "Super Thanks", { hide: ['[data-ytc-part="thanks"]'] }),
             tg("hideAsk", "Ask (AI) button", "Przycisk Zapytaj (AI)", { hide: ['[data-ytc-part="ask"]'] }),

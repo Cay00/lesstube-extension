@@ -390,7 +390,7 @@
 
   /* ------------------------------------------------------- watch page */
 
-  const ACTION_KEYS = ["hideShare", "hideDownload", "hideSave", "hideClip", "hideThanks", "hideAsk", "hideOffers", "hideSubscribe", "hideJoin", "hideNotifyBell", "hideFundraiserBadge", "hideMoreFromChannel"];
+  const ACTION_KEYS = ["hideShare", "hideDownload", "hideClip", "hideThanks", "hideAsk", "hideOffers", "hideSubscribe", "hideJoin", "hideFundraiserBadge", "hideMoreFromChannel"];
 
   const behaviorLock = { expand: 0 };
 
