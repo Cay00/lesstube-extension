@@ -392,8 +392,7 @@
 
   const ACTION_KEYS = ["hideShare", "hideDownload", "hideSave", "hideClip", "hideThanks", "hideAsk", "hideOffers", "hideSubscribe", "hideJoin", "hideNotifyBell", "hideFundraiserBadge", "hideMoreFromChannel"];
 
-  const behaviorLock = { autoplay: 0, theater: 0, expand: 0 };
-  let autoplayHandledFor = "";
+  const behaviorLock = { expand: 0 };
 
   const onWatchPage = () => location.pathname === "/watch";
 
@@ -500,19 +499,6 @@
     if (full || ACTION_KEYS.some((k) => E[k])) tagWatchActions();
     if (playerPopupOpen()) return;
 
-    if (E.disableAutoplay === true) {
-      const videoId = new URLSearchParams(location.search).get("v") || "";
-      const toggle = document.querySelector(".ytp-autonav-toggle-button");
-      if (toggle && autoplayHandledFor !== videoId) {
-        autoplayHandledFor = videoId; // once per video, so a manual re-enable is respected
-        if (toggle.getAttribute("aria-checked") === "true") clickOnce(toggle, "autoplay");
-      }
-    }
-    if (E.autoTheater === true) {
-      const flexy = document.querySelector("ytd-watch-flexy");
-      const button = document.querySelector(".ytp-size-button");
-      if (flexy && button && !flexy.hasAttribute("theater") && !flexy.hasAttribute("fullscreen")) clickOnce(button, "theater");
-    }
     if (E.expandDescription === true && E.hideDescription !== true) {
       const expander = document.querySelector("ytd-watch-metadata ytd-text-inline-expander, ytd-watch-metadata ytd-expander");
       const button = expander?.querySelector("#expand, button#expand, tp-yt-paper-button#expand");

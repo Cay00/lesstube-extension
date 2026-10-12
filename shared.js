@@ -409,17 +409,8 @@
       id: "player",
       icon: '<rect x="3.5" y="5.5" width="17" height="13" rx="3"/><path d="m10.5 9.5 4 2.5-4 2.5z"/>',
       title: T("Player", "Odtwarzacz"),
-      desc: T("Overlays, buttons and playback behaviour.", "Nakładki, przyciski i zachowanie odtwarzania."),
+      desc: T("Overlays and buttons.", "Nakładki i przyciski."),
       sections: [
-        {
-          title: T("Behaviour", "Zachowanie"),
-          items: [
-            tg("disableAutoplay", "Turn autoplay off", "Wyłącz autoodtwarzanie", {
-              hint: T("Next video never starts by itself", "Następny film nie włącza się sam"),
-            }),
-            tg("autoTheater", "Start in theater mode", "Zaczynaj w trybie kinowym"),
-          ],
-        },
         {
           title: T("Overlays", "Nakładki"),
           items: [
