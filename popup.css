@@ -78,12 +78,13 @@ h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
   background: var(--off); transition: background .15s;
 }
 .track::after {
-  content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%;
+  content: ""; position: absolute; top: 3px; inset-inline-start: 3px; width: 14px; height: 14px; border-radius: 50%;
   background: var(--knob); transition: transform .15s, background .15s;
 }
 input[type="checkbox"] { position: absolute; opacity: 0; width: 1px; height: 1px; }
 input[type="checkbox"]:checked + .track { background: var(--accent); }
 input[type="checkbox"]:checked + .track::after { transform: translateX(16px); background: var(--accent-ink); }
+:root[dir="rtl"] input[type="checkbox"]:checked + .track::after { transform: translateX(-16px); }
 input[type="checkbox"]:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
 input[type="checkbox"]:disabled + .track { opacity: .45; }
 
@@ -96,11 +97,11 @@ input[type="checkbox"]:disabled + .track { opacity: .45; }
   border-bottom: 1px solid var(--line);
 }
 .searchbar svg {
-  position: absolute; left: 25px; top: 9px; width: 16px; height: 16px;
+  position: absolute; inset-inline-start: 25px; top: 9px; width: 16px; height: 16px;
   fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-linecap: round; pointer-events: none;
 }
 .searchbar input {
-  width: 100%; height: 34px; padding: 0 12px 0 34px; border: 1px solid var(--line); border-radius: 9px;
+  width: 100%; height: 34px; padding-block: 0; padding-inline: 34px 12px; border: 1px solid var(--line); border-radius: 9px;
   background: var(--bg); outline: none;
 }
 .searchbar input::placeholder { color: var(--muted); }
@@ -111,7 +112,7 @@ input[type="checkbox"]:disabled + .track { opacity: .45; }
 .body { display: grid; grid-template-columns: 56px 1fr; min-height: 0; }
 .rail {
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0;
-  background: var(--rail); border-right: 1px solid var(--line); overflow-y: auto; scrollbar-width: none;
+  background: var(--rail); border-inline-end: 1px solid var(--line); overflow-y: auto; scrollbar-width: none;
 }
 .rail button {
   position: relative; width: 44px; height: 42px; display: grid; place-items: center;
@@ -120,16 +121,16 @@ input[type="checkbox"]:disabled + .track { opacity: .45; }
 .rail button:hover { color: var(--text); background: var(--raise); }
 .rail button[aria-current="page"] { color: var(--text); background: var(--panel); }
 .rail button[aria-current="page"]::before {
-  content: ""; position: absolute; left: -6px; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: var(--accent);
+  content: ""; position: absolute; inset-inline-start: -6px; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: var(--accent);
 }
 .rail svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .badge {
-  position: absolute; top: 3px; right: 1px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+  position: absolute; top: 3px; inset-inline-end: 1px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
   background: var(--accent); color: var(--accent-ink); font-size: 10.5px; font-weight: 700; line-height: 16px; text-align: center;
 }
 .rail .grow { flex: 1; }
 
-.main { overflow-y: auto; padding: 14px 14px 20px 16px; outline: none; scrollbar-width: thin; scrollbar-color: var(--off) transparent; background: var(--bg); }
+.main { overflow-y: auto; padding-block: 14px 20px; padding-inline: 16px 14px; outline: none; scrollbar-width: thin; scrollbar-color: var(--off) transparent; background: var(--bg); }
 .app.paused .main { opacity: .55; }
 
 .main h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
@@ -148,18 +149,19 @@ input[type="checkbox"]:disabled + .track { opacity: .45; }
 .row .txt { min-width: 0; }
 .row .hint { display: block; margin-top: 1px; font-size: 12px; color: var(--muted); font-weight: 450; }
 .row.master { font-weight: 650; }
-.kids { margin: 0 0 0 14px; padding-left: 8px; border-left: 2px solid var(--line); }
+.kids { margin-block: 0; margin-inline: 14px 0; padding-inline-start: 8px; border-inline-start: 2px solid var(--line); }
 .kids .row { min-height: 36px; }
 .row.locked { opacity: .42; cursor: not-allowed; }
 .row.locked:hover { background: transparent; }
 
 select {
-  max-width: 190px; padding: 6px 28px 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer;
+  max-width: 190px; padding-block: 6px; padding-inline: 10px 28px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer;
   appearance: none; -webkit-appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
   background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%; background-size: 5px 5px; background-repeat: no-repeat;
 }
 select:hover { border-color: var(--muted); }
+:root[dir="rtl"] select { background-position: 10px 50%, 15px 50%; } /* arrow on the left in RTL */
 option { background: var(--panel); color: var(--text); }
 .row-select { cursor: default; }
 
@@ -186,7 +188,7 @@ option { background: var(--panel); color: var(--text); }
 textarea { height: 74px; resize: none; font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; line-height: 1.4; word-break: break-all; }
 .adder input:focus, textarea:focus { border-color: var(--accent); }
 .hidden-list { display: grid; gap: 4px; margin: 4px 0 0; padding: 0; list-style: none; }
-.hidden-list li { display: flex; align-items: center; gap: 8px; padding: 5px 6px 5px 10px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); }
+.hidden-list li { display: flex; align-items: center; gap: 8px; padding-block: 5px; padding-inline: 10px 6px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); }
 .hidden-list code { flex: 1; min-width: 0; font: 11.5px/1.35 ui-monospace, Consolas, monospace; word-break: break-all; }
 .icon-btn { flex: none; width: 26px; height: 26px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 17px; line-height: 1; }
 .icon-btn:hover { background: var(--raise); color: var(--danger); }
@@ -194,6 +196,10 @@ textarea { height: 74px; resize: none; font-family: ui-monospace, Consolas, mono
 .split { display: flex; gap: 8px; }
 .split .btn { flex: 1; }
 .foot { margin: 18px 8px 0; font-size: 11.5px; color: var(--muted); font-weight: 450; }
+
+/* selectors and the export string are code: keep them LTR inside an RTL popup */
+textarea, .adder input, .hidden-list code { direction: ltr; text-align: start; }
+:root[dir="rtl"] textarea, :root[dir="rtl"] .adder input, :root[dir="rtl"] .hidden-list code { text-align: left; }
 
 /* ---------- toast ---------- */
 .toast {

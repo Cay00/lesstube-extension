@@ -1,5 +1,5 @@
 /*
- * YouTube Customizer – content script.
+ * LessTube – content script.
  * Most features are pure CSS generated from shared.js. This file handles what
  * CSS cannot do: localized labels, shadow DOM, collapsible guide sections,
  * redirects, autoplay / theater behaviour and the element picker.
@@ -8,20 +8,24 @@
   "use strict";
 
   const Y = globalThis.YTC;
+  // Everything that depends on YouTube's display language (button labels, "2 days ago" ...) lives in labels.js.
+  const { VIEWS_RE, DATE_RE, ABS_DATE_RE, LICENSE_RE, FUND_RE, MORE_CHANNEL_RE, ACTION_RULES, UPLOAD_RE, TRANSCRIPT_RE, SHOW_MORE, SHOW_LESS } =
+    globalThis.YTC_LABELS;
   const root = document.documentElement;
 
   let S = Y.normalize({}); // saved settings
   let E = S; // effective settings (all off while paused)
-  let lang = Y.lang("auto");
+  let cssKey = null; // which toggles the generated stylesheet currently covers
   let full = true; // run every module once (after settings change / navigation)
   let storageLoaded = false;
   let scheduled = false;
+
+  const squish = (text) => (text || "").replace(/\s+/g, " ").trim();
 
   /* ------------------------------------------------------------ styles */
 
   const styleEl = document.createElement("style");
   styleEl.id = "ytc-style";
-  styleEl.textContent = Y.buildCss();
   const customEl = document.createElement("style");
   customEl.id = "ytc-custom";
   root.append(styleEl, customEl);
@@ -29,7 +33,13 @@
   function paint(settings) {
     S = Y.normalize(settings);
     E = S.enabled ? S : Y.allOff();
-    lang = Y.lang(S.uiLang);
+    // Stylesheet only holds rules of the switched-on toggles; rebuilt when that set changes.
+    const on = Y.TOGGLES.filter((item) => E[item.key] === true).map((item) => item.key);
+    const key = on.join();
+    if (key !== cssKey) {
+      cssKey = key;
+      styleEl.textContent = Y.buildCss(E);
+    }
     for (const item of Y.TOGGLES) root.classList.toggle(Y.cls(item.key), E[item.key] === true);
     root.classList.toggle("ytc-columns", E.columns > 0);
     root.style.setProperty("--ytc-columns", String(E.columns > 0 ? E.columns : 4));
@@ -70,11 +80,16 @@
   const BOX_PROPS = ["width", "max-width", "min-width", "margin", "margin-left", "margin-right", "flex-basis"];
 
   function clearInlineBox(element) {
+    if (!element.hasAttribute("style")) return; // nothing inline, nothing to clear
     for (const prop of BOX_PROPS) element.style.removeProperty(prop);
   }
 
   function fixGrid(grid) {
-    for (const [name, value] of Object.entries(gridVars())) grid.style.setProperty(name, value, "important");
+    for (const [name, value] of Object.entries(gridVars())) {
+      if (grid.style.getPropertyValue(name) !== value || grid.style.getPropertyPriority(name) !== "important") {
+        grid.style.setProperty(name, value, "important");
+      }
+    }
     const contents = grid.querySelector(":scope > #contents");
     if (!contents) return;
     clearInlineBox(contents);
@@ -89,9 +104,10 @@
   }
 
   function updateGrids() {
+    if (E.columns <= 0 && !full) return;
     const grids = document.querySelectorAll("ytd-rich-grid-renderer");
     if (E.columns > 0) grids.forEach(fixGrid);
-    else if (full) grids.forEach(resetGrid);
+    else grids.forEach(resetGrid);
   }
 
   /* ------------------------------------------------- Shorts / Playables */
@@ -102,7 +118,7 @@
   function shelfTitle(section) {
     for (const title of section.querySelectorAll("#title")) {
       if (title.closest("ytd-rich-item-renderer, ytd-rich-grid-media, ytd-reel-item-renderer")) continue;
-      const text = title.textContent.replace(/\s+/g, " ").trim();
+      const text = squish(title.textContent);
       if (text) return text;
     }
     return "";
@@ -144,7 +160,7 @@
     document.querySelectorAll("ytd-guide-entry-renderer, ytd-mini-guide-entry-renderer").forEach((entry) => {
       const link = entry.querySelector("a[href]");
       const href = link?.getAttribute("href") || "";
-      const title = (link?.getAttribute("title") || link?.textContent || "").replace(/\s+/g, " ").trim();
+      const title = squish(link?.getAttribute("title") || link?.textContent);
       markWidget(entry, widgetKind(title, [href]));
     });
   }
@@ -181,21 +197,17 @@
     { id: "showMore", titles: ["pokaż więcej", "pokaz wiecej", "pokaż mniej", "pokaz mniej", "show more", "show less"] },
   ];
 
-  const HOME_GUIDE = new Set(["home", "shorts"]);
-  const LIBRARY_GUIDE = new Set(["you", "channel", "history", "playlists", "watchLater", "liked", "yourVideos", "downloads", "courses", "clips", "libraryShowMore"]);
-  const EXPLORE_GUIDE = new Set(["exploreMusic", "movies", "hype", "live", "gaming", "news", "sports", "podcasts", "playables", "support", "exploreShowMore"]);
-  const MORE_GUIDE = new Set(["music", "kids", "reports"]);
-
-  const GUIDE_FLAG = {
-    home: "hideGuideHome", shorts: "hideGuideShorts", subscriptions: "hideGuideSubscriptions", music: "hideGuideMusic",
-    kids: "hideGuideKids", you: "hideGuideYou", channel: "hideGuideChannel", history: "hideGuideHistory",
-    playlists: "hideGuidePlaylists", yourVideos: "hideGuideYourVideos", watchLater: "hideGuideWatchLater",
-    downloads: "hideGuideDownloads", clips: "hideGuideClips", liked: "hideGuideLiked", courses: "hideGuideCourses",
-    exploreMusic: "hideGuideExploreMusic", movies: "hideGuideMovies", hype: "hideGuideHype", live: "hideGuideLive",
-    gaming: "hideGuideGaming", news: "hideGuideNews", sports: "hideGuideSports", podcasts: "hideGuidePodcasts",
-    playables: "hideGuidePlayables", support: "hideGuideSupport", reports: "hideGuideReports",
-    libraryShowMore: "hideGuideLibraryShowMore", exploreShowMore: "hideGuideExploreShowMore",
-  };
+  /*
+   * Guide entry id <-> setting key: "watchLater" <-> "hideGuideWatchLater".
+   * Which entries belong to which section (and its master switch) is read from
+   * the schema in shared.js, so adding a guide toggle there is enough.
+   */
+  const guideFlag = (id) => "hideGuide" + id[0].toUpperCase() + id.slice(1);
+  const guideIdsOf = (master) =>
+    new Set(Y.GROUPS[master].filter((key) => key.startsWith("hideGuide")).map((key) => key[9].toLowerCase() + key.slice(10)));
+  const LIBRARY_GUIDE = guideIdsOf("hideLibrarySection");
+  const EXPLORE_GUIDE = guideIdsOf("hideExploreSection");
+  const MORE_GUIDE = guideIdsOf("hideMoreSection");
 
   const GUIDE_KEYS = Y.TOGGLES.filter(
     (i) => Y.ITEM_PANEL[i.key] === "guide" && i.key !== "hideSidebar" && i.key !== "hideMiniGuide"
@@ -210,12 +222,15 @@
     } catch {
       url = null;
     }
-    const title = (entry.innerText || link?.getAttribute("title") || "").replace(/\s+/g, " ").trim().toLowerCase();
+    const title = squish(entry.innerText || link?.getAttribute("title")).toLowerCase();
     return { url, title };
   }
 
+  const CHANNEL_PATH = /^\/(?:@|channel\/|user\/|c\/)/;
+
   function guideId(entry) {
-    if (entry.matches("ytd-guide-collapsible-entry-renderer")) return "showMore";
+    // The collapsible block and its expander / collapser entries have fixed ids, whatever the language.
+    if (entry.matches("ytd-guide-collapsible-entry-renderer, #expander-item, #collapser-item")) return "showMore";
     const { url, title } = entryInfo(entry);
     for (const rule of GUIDE_RULES) {
       if (rule.titles?.includes(title)) return rule.id;
@@ -241,13 +256,9 @@
   }
 
   function guideHidden(id) {
-    if (!id || !GUIDE_FLAG[id]) return false;
-    if (E.hideHomeSection === true && HOME_GUIDE.has(id)) return true;
-    if (E.hideSubscriptionsSection === true && (id === "subscriptions" || id === "subscriptionsShowMore")) return true;
-    if (E.hideLibrarySection === true && LIBRARY_GUIDE.has(id)) return true;
-    if (E.hideExploreSection === true && EXPLORE_GUIDE.has(id)) return true;
-    if (E.hideMoreSection === true && MORE_GUIDE.has(id)) return true;
-    return E[GUIDE_FLAG[id]] === true;
+    const flag = id && guideFlag(id);
+    if (!flag || !(flag in E)) return false; // not a toggle (e.g. a plain "show more")
+    return E[flag] === true || E[Y.MASTER_OF[flag]] === true;
   }
 
   function isShown(element) {
@@ -257,55 +268,41 @@
   }
 
   function entryLabel(entry) {
-    return (entry.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+    return squish(entry.textContent).toLowerCase();
   }
 
   function visibleGuideLabel(entry) {
-    if (!isShown(entry)) return "";
-    return (entry.innerText || "").replace(/\s+/g, " ").trim().toLowerCase();
-  }
-
-  function setExpanded(collapsible, expand) {
-    if (typeof collapsible.set === "function") collapsible.set("expanded", expand);
-    else collapsible.expanded = expand;
+    return isShown(entry) ? squish(entry.innerText).toLowerCase() : "";
   }
 
   function isSubscriptionSection(section, rows) {
     const ids = rows.filter((row) => row.section === section).map((row) => row.id);
     if (ids.includes("home") || ids.includes("shorts")) return false;
     const headerText = [...section.querySelectorAll("#header, #guide-section-title")]
-      .map((header) => (header.innerText || "").replace(/\s+/g, " ").trim().toLowerCase())
+      .map((header) => squish(header.innerText).toLowerCase())
       .join(" ");
-    if (headerText === "subskrypcje" || headerText === "subscriptions" || headerText.startsWith("subskrypcje ") || headerText.startsWith("subscriptions ")) {
-      return true;
-    }
+    if (/^(subskrypcje|subscriptions)( |$)/.test(headerText)) return true;
     return ids.includes("subscriptions") && !ids.some((id) => LIBRARY_GUIDE.has(id) || EXPLORE_GUIDE.has(id) || MORE_GUIDE.has(id));
+  }
+
+  /** The "Show more" / "Show less" entry of a guide section: by its fixed id first, by label (see labels.js) as a fallback. */
+  function findShowToggle(section, expand, visibleOnly) {
+    const byId = section.querySelector(expand ? "#expander-item" : "#collapser-item");
+    if (byId) return !visibleOnly || isShown(byId) ? byId : null;
+    const labels = expand ? SHOW_MORE : SHOW_LESS;
+    const labelOf = visibleOnly ? visibleGuideLabel : entryLabel;
+    return [...section.querySelectorAll("ytd-guide-entry-renderer")].find((entry) => labels.includes(labelOf(entry))) || null;
   }
 
   function syncSubscriptionExpansion(section, isSubscriptions) {
     if (!isSubscriptions || E.hideSubscriptionsSection === true || section.dataset.ytcToggleLock === "1") return;
     const expand = E.expandSubscriptions === true;
-    const collapsibles = [...section.querySelectorAll("ytd-guide-collapsible-entry-renderer")];
-    const controllable = collapsibles.filter((c) => "expanded" in c || typeof c.set === "function");
-    if (controllable.length) {
-      for (const collapsible of controllable) {
-        if (Boolean(collapsible.expanded) === expand) continue;
-        section.dataset.ytcToggleLock = "1";
-        setTimeout(() => delete section.dataset.ytcToggleLock, 500);
-        setExpanded(collapsible, expand);
-      }
-      return;
-    }
-    const buttons = [...section.querySelectorAll("ytd-guide-entry-renderer")]
-      .map((entry) => ({ entry, text: visibleGuideLabel(entry) }))
-      .filter((item) => ["pokaż więcej", "show more", "pokaż mniej", "show less"].includes(item.text));
-    const showMore = buttons.find((item) => item.text === "pokaż więcej" || item.text === "show more");
-    const showLess = buttons.find((item) => item.text === "pokaż mniej" || item.text === "show less");
-    const button = expand ? showMore : showLess;
+    // Polymer's expanded/set() are invisible from the isolated world, so the only way is clicking the button.
+    const button = findShowToggle(section, expand, true);
     if (!button) return;
     section.dataset.ytcToggleLock = "1";
     setTimeout(() => delete section.dataset.ytcToggleLock, 500);
-    (button.entry.querySelector("a#endpoint, a, tp-yt-paper-item") || button.entry).click();
+    (button.querySelector("a#endpoint, a, tp-yt-paper-item") || button).click();
   }
 
   function revealCollapsedLibraryItems(section, rows) {
@@ -324,13 +321,9 @@
       forceHide(row.entry, false);
     }
     for (const collapsible of section.querySelectorAll("ytd-guide-collapsible-entry-renderer")) {
-      setExpanded(collapsible, true);
       collapsible.querySelectorAll("#expanded, #expandable-items").forEach((element) => element.removeAttribute("hidden"));
     }
-    const showMore = [...section.querySelectorAll("ytd-guide-entry-renderer")].find((entry) => {
-      const text = entryLabel(entry);
-      return text === "pokaż więcej" || text === "show more";
-    });
+    const showMore = findShowToggle(section, true, false);
     if (!showMore) return;
     section.dataset.ytcLibraryLock = "1";
     setTimeout(() => delete section.dataset.ytcLibraryLock, 500);
@@ -361,6 +354,13 @@
     const librarySections = new Set(rows.filter((row) => row.section && LIBRARY_GUIDE.has(row.id)).map((row) => row.section));
     const exploreSections = new Set(rows.filter((row) => row.section && EXPLORE_GUIDE.has(row.id)).map((row) => row.section));
 
+    // "Your channel" has neither a fixed URL nor a fixed label: it is the channel link among the library entries.
+    for (const row of rows) {
+      if (row.id || !librarySections.has(row.section)) continue;
+      const { url } = entryInfo(row.entry);
+      if (url && url.hostname === location.hostname && CHANNEL_PATH.test(url.pathname)) row.id = "channel";
+    }
+
     for (const row of rows) {
       let id = row.id;
       if (id === "showMore" && subscriptionSections.has(row.section)) id = "subscriptionsShowMore";
@@ -390,23 +390,6 @@
 
   /* ------------------------------------------------------- watch page */
 
-  const VIEWS_RE = /(wyświetle|views|aufrufe|visualizaciones|reproducciones|\bvues\b|visualizzazioni|visualizações|просмотр|перегляд|weergaven|zhlédnutí|görüntüleme)/i;
-  const DATE_RE = /(\btemu\b|\bago\b|\bvor\b|\bhace\b|il y a|\bfa\b|\bhá\b|назад|тому|geleden|\bpřed\b|önce|premier|opublikowan|streamed|emisj)/i;
-  const LICENSE_RE = /(licencja|license|licence|lizenz|licencia|licenza|licença|kategoria|category|kategorie|categoría|catégorie|categoria|lokalizacja|location|creative commons)/i;
-  const FUND_RE = /zbiórk|fundraiser|donate|darowizn|spenden|donar|faire un don/i;
-  const MORE_CHANNEL_RE = /więcej z tego kanału|more videos|more from this channel|from this channel/i;
-  const ACTION_RULES = [
-    ["subscribe", /^(subskrybuj|subscribe|subskrybujesz|subscribed|abonnieren|suscribirse|s'abonner|iscriviti|inscrever-se|подписаться|підписатися|abonneren|odebírat|abone ol)$/i],
-    ["join", /^(dołącz|join|beitreten|unirse|rejoindre|unisciti|participar|присоединиться|приєднатися|word lid|přidat se|katıl)$/i],
-    ["share", /^(udostępnij|share|teilen|compartir|partager|condividi|compartilhar|поделиться|поділитися|delen|sdílet|paylaş)$/i],
-    ["download", /^(pobierz|download|herunterladen|descargar|télécharger|scarica|baixar|скачать|завантажити|downloaden|stáhnout|indir)$/i],
-    ["save", /^(zapisz|save|speichern|guardar|enregistrer|salva|salvar|сохранить|зберегти|opslaan|uložit|kaydet)$/i],
-    ["clip", /^(klip|clip|ausschnitt|recortar|ritaglia|criar clipe|клип|кліп|knipsel)$/i],
-    ["thanks", /super thanks|podziękuj|\bthanks\b|danke|gracias|merci|grazie|obrigado|спасибо|дякую/i],
-    ["notify", /powiadom|notification|benachrichtig|notificaci|notifica/i],
-    ["offers", /^(towary|bilety|oferty|merch|tickets|offers)$/i],
-    ["ask", /^(ask|zapytaj|fragen|preguntar|demander|chiedi|perguntar|спросить|запитати|vraag|zeptat se|sor)$/i],
-  ];
   const ACTION_KEYS = ["hideShare", "hideDownload", "hideSave", "hideClip", "hideThanks", "hideAsk", "hideOffers", "hideSubscribe", "hideJoin", "hideNotifyBell", "hideFundraiserBadge", "hideMoreFromChannel"];
 
   const behaviorLock = { autoplay: 0, theater: 0, expand: 0 };
@@ -423,10 +406,10 @@
 
   function labelOf(element) {
     const aria = element.getAttribute("aria-label") || element.getAttribute("title") || "";
-    if (aria) return aria.replace(/\s+/g, " ").trim();
+    if (aria) return squish(aria);
     // innerText of an open button includes the menu, which would retag the button and close it.
     if (element.closest(POPUP_ROOT)) return "";
-    return (element.innerText || "").replace(/\s+/g, " ").trim().slice(0, 80);
+    return squish(element.innerText).slice(0, 80);
   }
 
   function pageMenuOpen() {
@@ -441,12 +424,10 @@
     return false;
   }
 
-  const cleanText = (node) => (node.textContent || "").replace(/\s+/g, " ").trim();
-
   // True when a smaller element inside `node` already carries the views or the date.
   function hasMatchingDescendant(node) {
     for (const child of node.querySelectorAll("*")) {
-      const text = cleanText(child);
+      const text = squish(child.textContent);
       if (text && text.length <= 80 && (VIEWS_RE.test(text) || DATE_RE.test(text))) return true;
     }
     return false;
@@ -461,10 +442,10 @@
     for (const node of nodes) {
       if (node.closest("ytd-comment-renderer, ytd-comments")) continue;
       // textContent, not innerText: the result must not change once part of the text is hidden.
-      const text = cleanText(node);
+      const text = squish(node.textContent);
       if (!text || text.length > 180) continue;
       const views = VIEWS_RE.test(text);
-      const date = DATE_RE.test(text) || /^\d{1,2}\s+\p{L}+\.?\s+\d{4}$/u.test(text);
+      const date = DATE_RE.test(text) || ABS_DATE_RE.test(text);
       if ((views || date) && node.children.length && hasMatchingDescendant(node)) continue;
       if (views && date) tagPart(node, "views-date");
       else if (views && text.length < 80) tagPart(node, "views");
@@ -541,6 +522,17 @@
 
   /* ------------------------------------------- shadow-DOM aware scanners */
 
+  /** Un-hide targets that were not found on this pass (unless they should stay hidden and still exist). */
+  function releaseMissing(targets, found, hide, onRelease) {
+    for (const element of targets) {
+      if (found.has(element)) continue;
+      if (hide && element.isConnected) continue;
+      forceHide(element, false);
+      if (onRelease) onRelease(element);
+      targets.delete(element);
+    }
+  }
+
   function forEachDeep(rootNode, visit) {
     if (!rootNode?.querySelectorAll) return;
     for (const node of rootNode.querySelectorAll("*")) {
@@ -559,7 +551,6 @@
     return node;
   }
 
-  const UPLOAD_RE = /^(prześlij|przeslij|utwórz|utworz|create|upload|erstellen|hochladen|crear|subir|créer|crea|carica|criar|enviar|создать|загрузить|створити|завантажити|maken|uploaden|vytvořit|nahrát|oluştur|yükle)$/i;
   const uploadTargets = new Set();
 
   function hideUploadButton() {
@@ -569,8 +560,8 @@
     if (masthead) {
       forEachDeep(masthead, (node) => {
         if (node.id === "avatar-btn") return;
-        const label = (node.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim();
-        const text = node.childElementCount === 0 ? (node.textContent || "").replace(/\s+/g, " ").trim() : "";
+        const label = squish(node.getAttribute("aria-label"));
+        const text = node.childElementCount === 0 ? squish(node.textContent) : "";
         if (!UPLOAD_RE.test(label) && !UPLOAD_RE.test(text)) return;
         const host = hostInLightDom(node, "ytd-topbar-menu-button-renderer, ytd-button-renderer, yt-button-view-model");
         if (!host || host.id === "avatar-btn" || host.closest?.("#avatar-btn")) return;
@@ -580,16 +571,9 @@
         forceHide(host, hide);
       });
     }
-    for (const element of uploadTargets) {
-      if (found.has(element)) continue;
-      if (hide && element.isConnected) continue;
-      forceHide(element, false);
-      delete element.dataset.ytcUpload;
-      uploadTargets.delete(element);
-    }
+    releaseMissing(uploadTargets, found, hide, (element) => delete element.dataset.ytcUpload);
   }
 
-  const TRANSCRIPT_RE = /transkrypc|transcript|transkript|transcripci|transcrizione|transcrição|расшифровк|транскрипц/i;
   const transcriptTargets = new Set();
 
   function hideTranscript() {
@@ -612,8 +596,8 @@
           forceHide(node, hide);
           return;
         }
-        const label = (node.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim();
-        const text = node.childElementCount === 0 ? (node.textContent || "").replace(/\s+/g, " ").trim() : "";
+        const label = squish(node.getAttribute("aria-label"));
+        const text = node.childElementCount === 0 ? squish(node.textContent) : "";
         if ((!TRANSCRIPT_RE.test(label) && !TRANSCRIPT_RE.test(text)) || text.length > 48) return;
         const host = hostInLightDom(
           node,
@@ -626,13 +610,9 @@
         forceHide(host, hide);
       });
     }
-    for (const element of transcriptTargets) {
-      if (found.has(element)) continue;
-      if (hide && element.isConnected) continue;
-      forceHide(element, false);
+    releaseMissing(transcriptTargets, found, hide, (element) => {
       if (element.dataset.ytcPart === "transcript") delete element.dataset.ytcPart;
-      transcriptTargets.delete(element);
-    }
+    });
   }
 
   const endscreenTargets = new Set();
@@ -657,12 +637,7 @@
         forceHide(node, hide);
       });
     }
-    for (const element of endscreenTargets) {
-      if (found.has(element)) continue;
-      if (hide && element.isConnected) continue;
-      forceHide(element, false);
-      endscreenTargets.delete(element);
-    }
+    releaseMissing(endscreenTargets, found, hide);
   }
 
   /* ---------------------------------------------------------- scheduler */
@@ -707,9 +682,9 @@
 
   let picker = null;
 
-  function ui(key) {
-    return Y.tr(Y.UI[key], lang);
-  }
+  // Translated by the popup and sent with the "ytc-pick" message, so this script needs no translation tables.
+  let pickerText = {};
+  const ui = (key) => pickerText[key] || Y.tr(Y.UI[key], "en");
 
   function makeEl(tag, css, text) {
     const el = document.createElement(tag);
@@ -848,6 +823,7 @@
   try {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message && message.type === "ytc-pick") {
+        pickerText = (message.ui && typeof message.ui === "object" && message.ui) || {};
         startPicker();
         sendResponse({ ok: true });
       }

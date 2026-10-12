@@ -21,6 +21,7 @@ LessTube is a lightweight Chrome extension that lets you customize the YouTube i
 - **Element picker** — select elements directly on the page, where supported.
 - **Import and export settings** — back up and transfer your configuration.
 - **Simple settings popup** — manage your preferences in one place.
+- **Works with YouTube in many languages** — buttons are matched by id, URL or structure where possible, with label lists for pl, en, de, es, fr, it, pt, ru, uk, nl, cs, tr, ja, zh, ko, hi, ar and id as a fallback.
 - **13 interface languages** — English, Polish, Spanish, Portuguese, German, French, Russian, Japanese, Chinese, Korean, Hindi, Arabic and Indonesian.
 
 ## Installation
@@ -42,6 +43,7 @@ The project uses JavaScript, CSS, HTML, and Manifest V3.
 | File | Purpose |
 |---|---|
 | `shared.js` | Settings schema (English + Polish labels), CSS generation, import/export, and selector utilities. Loaded on YouTube and in the popup |
+| `labels.js` | Words used to recognise YouTube's own buttons and text (Share, Save, views, "2 days ago" ...) in each YouTube language. Add a language here if a button is not recognised |
 | `i18n.js` | Translations for the other interface languages, keyed by the English text. Popup only |
 | `content.js` | YouTube DOM manipulation, redirects, and element picker |
 | `style.css` | Layout and video grid styling |

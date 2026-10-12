@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "LessTube — YouTube Cleaner & Customizer",
   "short_name": "LessTube",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
   "minimum_chrome_version": "105",
@@ -24,7 +24,7 @@
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/*"],
-      "js": ["shared.js", "content.js"],
+      "js": ["shared.js", "labels.js", "content.js"],
       "css": ["style.css"],
       "run_at": "document_start"
     }

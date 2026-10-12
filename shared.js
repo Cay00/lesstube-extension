@@ -34,6 +34,36 @@
   const opt = (v, en, pl) => ({ v, l: T(en, pl || en) });
   const under = (prefix, list) => list.map((s) => prefix + " " + s);
 
+  /*
+   * aria-labels are shown in YouTube's language. One :is() rule lists the label in every language
+   * we know (pl en de es fr pt ru ja zh ko hi ar id), so non-Latin and non-Polish/English YouTube
+   * is covered too. Selectors by id / tag stay next to these as the language-proof primary rules.
+   * Missing language? Add its label to the list.
+   */
+  const ariaList = (labels, exact) =>
+    ":is(" + labels.map((l) => "[aria-label" + (exact ? "" : "*") + '="' + l + '"' + (exact ? "" : " i") + "]").join(",") + ")";
+  const ariaAny = (scope, labels, exact) => scope + ariaList(labels, exact);
+
+  const AD_LABELS = [
+    "Reklama", "Sponsorowane", "Sponsored", "Ad", "Anzeige", "Gesponsert", "Anuncio", "Patrocinado", "Annonce", "Sponsorisé",
+    "Anúncio", "Реклама", "広告", "スポンサー", "广告", "廣告", "赞助", "광고", "विज्ञापन", "إعلان", "Iklan",
+  ];
+  const VOICE_LABELS = [
+    "Wyszukiwanie głosowe", "Voice search", "Sprachsuche", "Búsqueda por voz", "Recherche vocale", "Pesquisa por voz", "Голосовой поиск",
+    "音声検索", "语音搜索", "語音搜尋", "음성 검색", "आवाज़ से खोजें", "वॉइस सर्च", "البحث الصوتي", "Telusuri dengan suara", "Penelusuran suara",
+  ];
+  const NOTIFICATION_LABELS = [
+    "Powiadomienia", "Notifications", "Benachrichtigungen", "Notificaciones", "Notificações", "Уведомления",
+    "通知", "알림", "सूचनाएं", "सूचनाएँ", "إشعارات", "Notifikasi",
+  ];
+  const MORE_ACTIONS_EXACT = [
+    "Więcej", "More", "More actions", "Mehr", "Más", "Plus", "Mais", "Ещё", "その他", "更多", "더보기", "और", "المزيد", "Lainnya",
+  ];
+  const MORE_ACTIONS_CONTAINS = [
+    "Więcej działań", "Weitere Aktionen", "Más acciones", "Plus d'actions", "Mais ações", "Другие действия",
+    "その他の操作", "更多操作", "작업 더보기", "और कार्रवाइयां", "المزيد من الإجراءات", "Tindakan lainnya",
+  ];
+
   const THUMBS = [
     "ytd-thumbnail img",
     "yt-thumbnail-view-model img",
@@ -105,10 +135,7 @@
                 HOME + " ytd-banner-promo-renderer",
                 HOME + " ytd-in-feed-ad-layout-renderer",
                 HOME + " ytd-rich-item-renderer:has(ytd-ad-slot-renderer)",
-                HOME + ' ytd-rich-item-renderer:has([aria-label="Reklama"])',
-                HOME + ' ytd-rich-item-renderer:has([aria-label="Sponsorowane"])',
-                HOME + ' ytd-rich-item-renderer:has([aria-label="Sponsored"])',
-                HOME + ' ytd-rich-item-renderer:has([aria-label="Ad"])',
+                HOME + " ytd-rich-item-renderer:has(" + ariaList(AD_LABELS, true) + ")",
                 "#masthead-ad",
                 "ytd-primetime-promo-renderer",
               ],
@@ -328,8 +355,7 @@
               hide: [
                 "ytd-masthead #voice-search-button",
                 "ytd-masthead .ytSearchboxComponentVoiceSearchButton",
-                'ytd-masthead button[aria-label*="Wyszukiwanie głosowe" i]',
-                'ytd-masthead button[aria-label*="Voice search" i]',
+                ariaAny("ytd-masthead button", VOICE_LABELS),
               ],
             }),
             tg("hideMastheadUpload", "Create / upload", "Utwórz / prześlij", {
@@ -343,8 +369,7 @@
             tg("hideMastheadNotifications", "Notifications", "Powiadomienia", {
               hide: [
                 "ytd-notification-topbar-button-renderer",
-                'ytd-masthead button[aria-label*="Powiadomienia" i]',
-                'ytd-masthead button[aria-label*="Notifications" i]',
+                ariaAny("ytd-masthead button", NOTIFICATION_LABELS),
               ],
             }),
             tg("hideMastheadAvatar", "Account avatar", "Awatar konta", {
@@ -580,10 +605,8 @@
             }),
             tg("hideMoreActions", "“More” menu", "Menu „Więcej”", {
               hide: [
-                'ytd-watch-metadata #actions button[aria-label="Więcej"]',
-                'ytd-watch-metadata #actions button[aria-label="More"]',
-                'ytd-watch-metadata #actions button[aria-label="More actions"]',
-                'ytd-watch-metadata #actions button[aria-label*="Więcej działań" i]',
+                ariaAny("ytd-watch-metadata #actions button", MORE_ACTIONS_EXACT, true),
+                ariaAny("ytd-watch-metadata #actions button", MORE_ACTIONS_CONTAINS),
               ],
             }),
           ],
