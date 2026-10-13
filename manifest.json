@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "LessTube — YouTube Cleaner & Customizer",
   "short_name": "LessTube",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
   "minimum_chrome_version": "105",

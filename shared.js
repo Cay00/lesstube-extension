@@ -155,7 +155,15 @@
             }),
             tg("hideHoverPreview", "Turn off hover previews", "Wyłącz podglądy po najechaniu", {
               hint: T("No video playing inside thumbnails", "Bez odtwarzania filmu w miniaturze"),
-              hide: ["ytd-video-preview", "ytd-moving-thumbnail-renderer"],
+              hide: [
+                "ytd-video-preview",
+                "ytd-moving-thumbnail-renderer",
+                "ytd-thumbnail-overlay-loading-preview-renderer",
+                "animated-thumbnail-overlay-view-model",
+                "#mouseover-overlay",
+                "#inline-preview-player",
+                ".ytp-inline-preview-ui",
+              ],
             }),
           ],
         },

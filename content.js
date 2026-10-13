@@ -608,6 +608,80 @@
     return typeof value === "string" ? value : value?.baseVal || "";
   }
 
+  /*
+   * Watch-page suggestions (and other lockups) render the hover player inside
+   * an open shadow root, where the page stylesheet cannot see it.
+   */
+  const PREVIEW_CSS =
+    "animated-thumbnail-overlay-view-model,ytd-video-preview,ytd-moving-thumbnail-renderer,ytd-thumbnail-overlay-loading-preview-renderer,#mouseover-overlay,#inline-preview-player,.ytp-inline-preview-ui{display:none!important}";
+  const sealedPreviewRoots = new WeakSet();
+
+  function sealPreviewRoot(rootNode) {
+    if (!rootNode?.appendChild || sealedPreviewRoots.has(rootNode)) return;
+    sealedPreviewRoots.add(rootNode);
+    const style = document.createElement("style");
+    style.id = "ytc-hover-preview";
+    style.textContent = PREVIEW_CSS;
+    rootNode.appendChild(style);
+  }
+
+  function rootInPlayer(rootNode) {
+    let node = rootNode?.host;
+    while (node) {
+      if (node.id === "movie_player" || node.localName === "ytd-player" || node.classList?.contains("html5-video-player")) return true;
+      const parentRoot = node.getRootNode?.();
+      node = parentRoot instanceof ShadowRoot ? parentRoot.host : node.parentElement;
+    }
+    return false;
+  }
+
+  function silencePreviewVideos(rootNode) {
+    if (!rootNode?.querySelectorAll || rootInPlayer(rootNode)) return;
+    for (const video of rootNode.querySelectorAll("video")) {
+      video.muted = true;
+      if (!video.paused) video.pause();
+    }
+  }
+
+  function hideHoverPreviews() {
+    if (E.hideHoverPreview !== true) return;
+    const hosts = document.querySelectorAll(
+      "yt-lockup-view-model, ytd-thumbnail, ytd-compact-video-renderer, ytd-rich-grid-media, ytd-video-renderer, ytd-grid-video-renderer, ytd-playlist-video-renderer"
+    );
+    for (const host of hosts) {
+      const rootNode = host.shadowRoot;
+      if (!rootNode) continue;
+      sealPreviewRoot(rootNode);
+      silencePreviewVideos(rootNode);
+      for (const inner of rootNode.querySelectorAll("*")) {
+        if (!inner.shadowRoot) continue;
+        sealPreviewRoot(inner.shadowRoot);
+        silencePreviewVideos(inner.shadowRoot);
+      }
+    }
+  }
+
+  document.addEventListener(
+    "pointerover",
+    (event) => {
+      if (E.hideHoverPreview !== true) return;
+      const roots = [];
+      for (const node of event.composedPath()) {
+        if (!(node instanceof ShadowRoot) || rootInPlayer(node)) continue;
+        sealPreviewRoot(node);
+        roots.push(node);
+      }
+      if (!roots.length) return;
+      const quiet = () => {
+        for (const rootNode of roots) silencePreviewVideos(rootNode);
+      };
+      quiet();
+      requestAnimationFrame(quiet);
+      setTimeout(quiet, 300);
+    },
+    true
+  );
+
   function hideEndscreen() {
     if (!onWatchPage()) return;
     const hide = E.hideEndscreen === true;
@@ -647,6 +721,7 @@
       if (full || E.hideMastheadUpload || E.hideMasthead) hideUploadButton();
       if (full || E.hideTranscript) hideTranscript();
       if (full || E.hideEndscreen) hideEndscreen();
+      if (full || E.hideHoverPreview) hideHoverPreviews();
       applyWatchBehaviors();
     } finally {
       if (!menuOpen) full = false;
