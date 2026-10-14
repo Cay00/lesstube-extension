@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "LessTube — YouTube Cleaner & Customizer",
+  "name": "LessTube: Hide YouTube Shorts, Comments & Distractions",
   "short_name": "LessTube",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
   "minimum_chrome_version": "105",
@@ -14,7 +14,7 @@
   },
   "permissions": ["storage"],
   "action": {
-    "default_title": "LessTube — YouTube Cleaner & Customizer",
+    "default_title": "LessTube — Hide YouTube distractions",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
