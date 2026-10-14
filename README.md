@@ -96,4 +96,4 @@ LessTube uses Chrome's storage API to save user preferences. It does not make ex
 
 ## License
 
-No license file is included in this folder yet.
+LessTube is licensed under the MIT License.
