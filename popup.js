@@ -64,14 +64,18 @@
     chrome.storage.local.set(patch);
   }
 
-  const isLocked = (key) => Boolean(Y.MASTER_OF[key] && settings[Y.MASTER_OF[key]]);
+  const isLocked = (key) => {
+    if (Y.MASTER_OF[key] && settings[Y.MASTER_OF[key]]) return true;
+    const gate = Y.REQUIRES[key];
+    return Boolean(gate && settings[gate] !== true);
+  };
 
   /* --------------------------------------------------------------- rows */
 
   function setValue(key, value) {
     settings[key] = value;
     persist({ [key]: value });
-    if (Y.GROUPS[key]) refreshLocks();
+    if (Y.GROUPS[key] || Y.GATES[key]) refreshLocks();
     renderRail();
   }
 
@@ -128,6 +132,12 @@
       if (section.master) {
         sec.append(toggleRow(section.master, { master: true }));
         sec.append(h("div", { class: "kids" }, section.items.map((item) => rowFor(item))));
+      } else if (section.when) {
+        const gated = section.items.filter((item) => item.requires);
+        const rest = section.items.filter((item) => !item.requires);
+        sec.append(toggleRow(section.when, { master: true }));
+        if (gated.length) sec.append(h("div", { class: "kids" }, gated.map((item) => rowFor(item))));
+        sec.append(...rest.map((item) => rowFor(item)));
       } else {
         sec.append(...section.items.map((item) => rowFor(item)));
       }
@@ -308,7 +318,9 @@
   function activeCount(panel) {
     let n = 0;
     for (const section of panel.sections) {
-      for (const item of Y.itemsOf(section)) if (item.type === "toggle" && settings[item.key]) n++;
+      for (const item of Y.itemsOf(section)) {
+        if (item.type === "toggle" && item.count !== false && settings[item.key]) n++;
+      }
     }
     return n;
   }

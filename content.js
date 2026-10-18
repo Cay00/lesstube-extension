@@ -41,6 +41,7 @@
       styleEl.textContent = Y.buildCss(E);
     }
     for (const item of Y.TOGGLES) root.classList.toggle(Y.cls(item.key), E[item.key] === true);
+    markScreen();
     root.classList.toggle("ytc-columns", E.columns > 0);
     root.style.setProperty("--ytc-columns", String(E.columns > 0 ? E.columns : 4));
     customEl.textContent = S.enabled ? S.customHide.map((s) => s + "{display:none!important}").join("\n") : "";
@@ -982,8 +983,22 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
 
+  function markScreen() {
+    const path = location.pathname || "/";
+    let screen = "";
+    if (path === "/") screen = "home";
+    else if (path.startsWith("/feed/subscriptions")) screen = "subscriptions";
+    else if (path.startsWith("/results")) screen = "search";
+    else if (/^\/(@|channel\/|c\/|user\/)/.test(path)) screen = "channel";
+    else if (path.startsWith("/playlist") || path.startsWith("/feed/playlists")) screen = "playlists";
+    else if (/^\/feed\/(history|library|you|courses|downloads|clips)\b/.test(path)) screen = "library";
+    if (screen) root.dataset.ytcScreen = screen;
+    else delete root.dataset.ytcScreen;
+  }
+
   document.addEventListener("yt-navigate-finish", () => {
     full = true;
+    markScreen();
     schedule();
     maybeRedirect(true);
   });

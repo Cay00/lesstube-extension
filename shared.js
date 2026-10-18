@@ -82,6 +82,54 @@
   ];
   const HOME = 'ytd-browse[page-subtype="home"]';
 
+  /*
+   * Thumbnail blur is global, then lifted per screen when that place is off.
+   * `self` matches the <html data-ytc-screen> set by the content script.
+   * `roots` are structural ancestors, so the watch page can stay sharp while
+   * its playlist panel stays blurred (or the other way around).
+   */
+  const BLUR_PLACES = [
+    { key: "blurHome", self: "home", roots: [HOME] },
+    { key: "blurSubscriptions", self: "subscriptions", roots: ['ytd-browse[page-subtype="subscriptions"]'] },
+    { key: "blurSearch", self: "search", roots: ["ytd-search"] },
+    { key: "blurChannel", self: "channel", roots: ['ytd-browse[page-subtype="channels"]'] },
+    { key: "blurWatch", roots: ["#related", "ytd-watch-next-secondary-results-renderer"] },
+    { key: "blurPlaylists", self: "playlists", roots: ['ytd-browse[page-subtype="playlist"]', "ytd-playlist-panel-renderer"] },
+    { key: "blurLibrary", self: "library", roots: ['ytd-browse[page-subtype="history"]', 'ytd-browse[page-subtype="library"]'] },
+  ];
+
+  function blurThumbnailCss(settings) {
+    const hover = THUMBS.map((s) => s.replace(/ img$/, ":hover img"));
+    let css =
+      under("&", THUMBS).join(",") + "{filter:blur(18px)!important;transition:filter .15s}" +
+      under("&", hover).join(",") + "{filter:none!important}" +
+      under("html.ytc-grayscale-thumbnails.ytc-blur-thumbnails", THUMBS).join(",") + "{filter:grayscale(1) blur(18px)!important}" +
+      under("html.ytc-grayscale-thumbnails.ytc-blur-thumbnails", hover).join(",") + "{filter:grayscale(1)!important}";
+    if (!settings) return css;
+    const both = THUMBS.concat(hover);
+    const gray = "html.ytc-grayscale-thumbnails.ytc-blur-thumbnails";
+    for (const place of BLUR_PLACES) {
+      if (settings[place.key] !== false) continue;
+      const plain = [];
+      const grayed = [];
+      if (place.self) {
+        for (const s of both) {
+          plain.push("&[data-ytc-screen=\"" + place.self + "\"] " + s);
+          grayed.push(gray + "[data-ytc-screen=\"" + place.self + "\"] " + s);
+        }
+      }
+      for (const root of place.roots || []) {
+        for (const s of both) {
+          plain.push("& " + root + " " + s);
+          grayed.push(gray + " " + root + " " + s);
+        }
+      }
+      css += plain.join(",") + "{filter:none!important}";
+      css += grayed.join(",") + "{filter:grayscale(1)!important}";
+    }
+    return css;
+  }
+
   /* ---------------------------------------------------------------- panels */
 
   const PANELS = [
@@ -719,15 +767,18 @@
         },
         {
           title: T("Thumbnails", "Miniatury"),
+          when: tg("blurThumbnails", "Blur thumbnails until hover", "Rozmyj miniatury do najechania", {
+            hint: T("Judge a video by its title, not its cover. Uncheck a screen to leave it sharp.", "Oceniaj film po tytule, nie po okładce. Odznacz ekran, który ma zostać ostry."),
+            css: blurThumbnailCss,
+          }),
           items: [
-            tg("blurThumbnails", "Blur thumbnails until hover", "Rozmyj miniatury do najechania", {
-              hint: T("Judge a video by its title, not its cover", "Oceniaj film po tytule, nie po okładce"),
-              css:
-                under("&", THUMBS).join(",") + "{filter:blur(18px)!important;transition:filter .15s}" +
-                under("&", THUMBS.map((s) => s.replace(/ img$/, ":hover img"))).join(",") + "{filter:none!important}" +
-                under("html.ytc-grayscale-thumbnails.ytc-blur-thumbnails", THUMBS).join(",") + "{filter:grayscale(1) blur(18px)!important}" +
-                under("html.ytc-grayscale-thumbnails.ytc-blur-thumbnails", THUMBS.map((s) => s.replace(/ img$/, ":hover img"))).join(",") + "{filter:grayscale(1)!important}",
-            }),
+            tg("blurHome", "Home", "Strona główna", { def: true, count: false, requires: "blurThumbnails" }),
+            tg("blurSubscriptions", "Subscriptions", "Subskrypcje", { def: true, count: false, requires: "blurThumbnails" }),
+            tg("blurSearch", "Search", "Wyszukiwanie", { def: true, count: false, requires: "blurThumbnails" }),
+            tg("blurChannel", "Channel", "Kanał", { def: true, count: false, requires: "blurThumbnails" }),
+            tg("blurWatch", "Video", "Film", { def: true, count: false, requires: "blurThumbnails", hint: T("Related videos beside the player", "Powiązane obok odtwarzacza") }),
+            tg("blurPlaylists", "Playlists", "Playlisty", { def: true, count: false, requires: "blurThumbnails", hint: T("Playlist pages and the panel on a video", "Strony playlist i panel przy filmie") }),
+            tg("blurLibrary", "Library", "Biblioteka", { def: true, count: false, requires: "blurThumbnails", hint: T("History and You", "Historia i Ty") }),
             tg("hideThumbnails", "Make thumbnails invisible", "Ukryj miniatury (zostaw układ)", {
               css: under("&", THUMBS).join(",") + "{opacity:0!important}",
             }),
@@ -746,18 +797,27 @@
 
   /* -------------------------------------------------------------- flatten */
 
-  /** A section's master switch (if any) followed by its items. */
-  const itemsOf = (section) => (section.master ? [section.master, ...section.items] : section.items);
+  /** A section's master or gate switch (if any) followed by its items. */
+  const itemsOf = (section) => {
+    const head = section.master || section.when;
+    return head ? [head, ...section.items] : section.items;
+  };
 
   const ITEMS = [];
   const ITEM_PANEL = {}; // key -> panel id
   const GROUPS = {}; // master key -> [child keys]
   const MASTER_OF = {}; // child key -> master key
+  const REQUIRES = {}; // child key -> gate key (locked while the gate is off)
+  const GATES = {}; // gate key -> [child keys]
   for (const panel of PANELS) {
     for (const section of panel.sections) {
       for (const item of itemsOf(section)) {
         ITEMS.push(item);
         ITEM_PANEL[item.key] = panel.id;
+        if (item.requires) {
+          REQUIRES[item.key] = item.requires;
+          (GATES[item.requires] || (GATES[item.requires] = [])).push(item.key);
+        }
       }
       if (section.master) {
         GROUPS[section.master.key] = section.items.map((i) => i.key);
@@ -783,7 +843,10 @@
       if (settings && settings[item.key] !== true) continue;
       const prefix = "html." + cls(item.key);
       if (item.hide) out.push(item.hide.map((s) => prefix + " " + s).join(",\n") + "{display:none!important}");
-      if (item.css) out.push(item.css.replace(/&/g, prefix));
+      if (item.css) {
+        const body = typeof item.css === "function" ? item.css(settings) : item.css;
+        if (body) out.push(body.replace(/&/g, prefix));
+      }
     }
     return out.join("\n");
   }
@@ -1017,7 +1080,7 @@
   }
 
   global.YTC = {
-    PANELS, ITEMS, TOGGLES, GROUPS, MASTER_OF, ITEM_PANEL, UI, LANGS, REDIRECTS,
+    PANELS, ITEMS, TOGGLES, GROUPS, MASTER_OF, REQUIRES, GATES, ITEM_PANEL, UI, LANGS, REDIRECTS,
     itemsOf, cls, buildCss, lang, tr, normalize, allOff, encode, decode,
     redirectTarget, validSelector, cleanCustom, selectorFor, MAX_CUSTOM,
   };
