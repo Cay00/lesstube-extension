@@ -30,10 +30,18 @@
     return node;
   }
 
-  const svg = (inner) => {
-    const wrap = document.createElement("div");
-    wrap.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + inner + "</svg>";
-    return wrap.firstChild;
+  const svg = (markup) => {
+    const ns = "http://www.w3.org/2000/svg";
+    const root = document.createElementNS(ns, "svg");
+    root.setAttribute("viewBox", "0 0 24 24");
+    root.setAttribute("aria-hidden", "true");
+    const tags = markup.match(/<(path|circle|rect)\b[^>]*\/?>/g) || [];
+    for (const tag of tags) {
+      const el = document.createElementNS(ns, tag.slice(1, tag.indexOf(" ")));
+      for (const attr of tag.matchAll(/([a-zA-Z-]+)="([^"]*)"/g)) el.setAttribute(attr[1], attr[2]);
+      root.append(el);
+    }
+    return root;
   };
 
   const tx = (obj) => Y.tr(obj, lang);

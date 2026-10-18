@@ -60,11 +60,11 @@
 
 ### Manual installation
 
-1. Clone or download this repository.
-2. Open `chrome://extensions` in Chrome.
-3. Enable **Developer mode**.
-4. Click **Load unpacked**.
-5. Select the LessTube project directory.
+Source files live in the project root. Browser manifests live in `chrome/manifest.json` and `firefox/manifest.json`.
+
+To load the extension unpacked, copy the manifest for that browser into the project root as `manifest.json`, then select the project directory. Chrome reads `chrome://extensions`. Firefox reads `about:debugging`.
+
+A store package is the same set of root files with that browser's manifest included as `manifest.json`. Leave out the other browser's folder.
 
 Manual installation is intended for testing and development.
 
@@ -92,6 +92,7 @@ LessTube uses Chrome's storage API to save user preferences. It does not make ex
 ## Compatibility
 
 - Google Chrome 105 or newer
+- Firefox 142 or newer
 - Manifest V3
 
 ## License

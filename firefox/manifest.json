@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "LessTube: Hide Shorts & Comments",
+  "short_name": "LessTube",
+  "version": "1.0.5",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "lesstube@lesstube.app",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "LessTube — Hide YouTube distractions",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["shared.js", "labels.js", "content.js"],
+      "css": ["style.css"],
+      "run_at": "document_start"
+    }
+  ]
+}
