@@ -59,8 +59,8 @@
     const target = Y.redirectTarget(location, S);
     if (!target) return;
     // Home replacement is the landing page only. Later visits (logo, guide, back) stay.
-    const path = location.pathname || "/";
-    if (fromNavigation && path === "/" && target === Y.REDIRECTS[S.homeRedirect]) return;
+    const homeTarget = Y.REDIRECTS[S.homeRedirect];
+    if (fromNavigation && homeTarget && target === homeTarget) return;
     location.replace(target);
   }
 
@@ -330,6 +330,16 @@
     return [...section.querySelectorAll("ytd-guide-entry-renderer")].find((entry) => labels.includes(labelOf(entry))) || null;
   }
 
+  /**
+   * Expand / collapse guide rows without following their <a id="endpoint"> href.
+   * Clicking the anchor navigates (often to /feed/you) and can brick YouTube's SPA
+   * until a full reload — logo and sidebar links then all land on that page.
+   */
+  function clickGuideToggle(entry) {
+    const target = entry.querySelector("tp-yt-paper-item, button") || entry;
+    target.click();
+  }
+
   function syncSubscriptionExpansion(section, isSubscriptions) {
     if (!isSubscriptions || E.hideSubscriptionsSection === true || section.dataset.ytcToggleLock === "1") return;
     const expand = E.expandSubscriptions === true;
@@ -338,14 +348,18 @@
     if (!button) return;
     section.dataset.ytcToggleLock = "1";
     setTimeout(() => delete section.dataset.ytcToggleLock, 500);
-    (button.querySelector("a#endpoint, a, tp-yt-paper-item") || button).click();
+    clickGuideToggle(button);
   }
 
   function revealCollapsedLibraryItems(section, rows) {
     if (E.hideLibrarySection === true || section.dataset.ytcLibraryLock === "1") return;
     const shownIds = new Set(rows.filter((row) => row.finalId && isShown(row.entry)).map((row) => row.finalId));
-    const missing = [...LIBRARY_GUIDE].some((id) => id !== "libraryShowMore" && !guideHidden(id) && !shownIds.has(id));
-    if (!missing) return;
+    // Only expand when we need a collapsed entry in the DOM to hide it — not on every
+    // visit just because YouTube tucked History / Playlists under "Show more".
+    const missingToHide = [...LIBRARY_GUIDE].some(
+      (id) => id !== "libraryShowMore" && guideHidden(id) && !shownIds.has(id)
+    );
+    if (!missingToHide) return;
 
     for (const row of rows) {
       if (!row.finalId || row.finalId === "libraryShowMore" || guideHidden(row.finalId)) continue;
@@ -365,7 +379,7 @@
     setTimeout(() => delete section.dataset.ytcLibraryLock, 500);
     const restoreHide = guideHidden("libraryShowMore");
     if (restoreHide) forceHide(showMore, false);
-    (showMore.querySelector("a#endpoint, a, tp-yt-paper-item") || showMore).click();
+    clickGuideToggle(showMore);
     if (restoreHide) forceHide(showMore, true);
   }
 
@@ -836,6 +850,12 @@
 
   function run() {
     scheduled = false;
+    // Pausing only clears CSS via paint(); without this, yt-navigate-finish still
+    // sets full and markGuide keeps clicking guide rows — which can leave the SPA broken.
+    if (!S.enabled) {
+      full = false;
+      return;
+    }
     // Opening Save, the bell, Subscribe or the ⋯ menu adds DOM nodes. Clicking or
     // rewriting those buttons in the same turn makes YouTube close the menu at once.
     const menuOpen = pageMenuOpen();

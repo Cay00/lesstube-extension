@@ -1034,7 +1034,7 @@
   const REDIRECTS = {
     subscriptions: "/feed/subscriptions",
     history: "/feed/history",
-    library: "/feed/library",
+    library: "/feed/you",
     watchLater: "/playlist?list=WL",
   };
 
