@@ -166,6 +166,40 @@
     });
   }
 
+  /* --------------------------------------- already watched (home + watch) */
+
+  const WATCHED_ROOTS = 'ytd-browse[page-subtype="home"], ytd-watch-flexy #secondary';
+  const WATCHED_CARDS = "ytd-rich-item-renderer, ytd-compact-video-renderer, yt-lockup-view-model";
+  const WATCHED_BARS = "#progress, .ytThumbnailOverlayProgressBarHostWatchedProgressBar, .ytThumbnailOverlayProgressBarHostWatchedProgressBarSegment";
+  const WATCHED_BADGES = "ytd-thumbnail-overlay-playback-status-renderer, .yt-badge-shape__text, .badge-shape-wiz__text";
+  const WATCHED_WORD = /^(watched|obejrzane|angesehen|visto|vu|assistido|просмотрено|視聴済み|已观看|已觀看|시청함|देखा गया|تمت المشاهدة|ditonton)$/i;
+
+  function watchedPercent(card) {
+    let max = 0;
+    for (const bar of card.querySelectorAll(WATCHED_BARS)) {
+      const match = /width:\s*([\d.]+)\s*%/.exec(bar.getAttribute("style") || "");
+      if (match) max = Math.max(max, Number(match[1]));
+    }
+    if (max >= 90) return max;
+    for (const badge of card.querySelectorAll(WATCHED_BADGES)) {
+      if (WATCHED_WORD.test(squish(badge.textContent))) return 100;
+    }
+    return max;
+  }
+
+  function markWatched() {
+    document.querySelectorAll('[data-ytc-hide="watched"]').forEach((el) => {
+      delete el.dataset.ytcHide;
+    });
+    if (E.hideWatched !== true) return;
+    document.querySelectorAll(WATCHED_ROOTS).forEach((root) => {
+      root.querySelectorAll(WATCHED_CARDS).forEach((card) => {
+        if (card.parentElement?.closest(WATCHED_CARDS)) return;
+        if (watchedPercent(card) >= 90) card.dataset.ytcHide = "watched";
+      });
+    });
+  }
+
   /* --------------------------------------------------------------- guide */
 
   const GUIDE_RULES = [
@@ -776,6 +810,7 @@
       updateGrids();
       if (menuOpen) return;
       if (full || E.hideShorts || E.hideGames) markWidgets();
+      if (full || E.hideWatched) markWatched();
       if (full || E.expandSubscriptions || GUIDE_KEYS.some((k) => E[k])) markGuide();
       if (full || E.hideMastheadUpload || E.hideMasthead) hideUploadButton();
       if (full || E.hideTranscript) hideTranscript();

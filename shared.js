@@ -161,6 +161,10 @@
         {
           title: T("Recommendations", "Rekomendacje"),
           items: [
+            tg("hideWatched", "Hide videos you already watched", "Ukryj już obejrzane filmy", {
+              hint: T("Finished videos on Home and beside the player", "Obejrzane filmy na stronie głównej i obok odtwarzacza"),
+              hide: ['[data-ytc-hide="watched"]'],
+            }),
             tg("hideSuggestions", "Hide the recommended feed", "Ukryj polecane filmy", {
               hint: T("Leaves the Home page empty", "Strona główna zostaje pusta"),
               hide: [HOME + " ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer"],
