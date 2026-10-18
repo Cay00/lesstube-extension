@@ -226,6 +226,7 @@
     { id: "podcasts", titles: ["podcasty", "podcasts"], paths: ["/podcasts"] },
     { id: "playables", titles: ["pokój gier", "pokoj gier", "playables"], paths: ["/playables"] },
     { id: "support", titles: ["wspieranie kanału", "wspieranie kanalu"] },
+    { id: "premium", titles: ["youtube premium"], paths: ["/premium", "/paid_memberships"] },
     { id: "music", titles: ["youtube music"], hosts: ["music.youtube.com"] },
     { id: "kids", titles: ["youtube kids", "dzieci", "youtube dzieci"], hosts: ["www.youtubekids.com", "youtubekids.com"] },
     { id: "reports", titles: ["historia zgłoszeń", "historia zgloszen", "report history"], paths: ["/reporthistory"] },
@@ -368,6 +369,37 @@
     if (restoreHide) forceHide(showMore, true);
   }
 
+  const MORE_HEADING = new Set([
+    "more from youtube",
+    "więcej z youtube",
+    "więcej od youtube",
+    "más de youtube",
+    "mehr von youtube",
+    "plus de youtube",
+    "mais do youtube",
+    "ещё от youtube",
+    "еще от youtube",
+    "youtube のその他のサービス",
+    "youtube から他のサービス",
+    "youtube 的更多内容",
+    "youtube的更多内容",
+    "youtube의 다른 서비스",
+    "youtube से और",
+    "المزيد من youtube",
+    "lainnya dari youtube",
+  ]);
+
+  function hideMoreHeading() {
+    const hide = E.hideGuideMoreTitle === true || E.hideMoreSection === true;
+    document.querySelectorAll("ytd-guide-renderer #guide-section-title, ytd-guide-renderer ytd-guide-collapsible-section-entry-renderer #title").forEach((node) => {
+      const text = squish(node.textContent).toLowerCase();
+      if (!MORE_HEADING.has(text)) return;
+      const header = node.closest("#header");
+      const target = header && !header.querySelector("ytd-guide-entry-renderer") ? header : node;
+      forceHide(target, hide);
+    });
+  }
+
   function hideGuideFooter() {
     const hide = E.hideGuideFooter === true || E.hideMoreSection === true;
     for (const guide of document.querySelectorAll("ytd-guide-renderer")) {
@@ -420,6 +452,7 @@
       if (!hideSubscriptionBlock) syncSubscriptionExpansion(section, subscriptionSections.has(section));
       if (librarySections.has(section)) revealCollapsedLibraryItems(section, inSection);
     }
+    hideMoreHeading();
     hideGuideFooter();
   }
 

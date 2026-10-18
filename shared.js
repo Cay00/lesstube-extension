@@ -376,6 +376,8 @@
           title: T("More from YouTube", "Więcej z YouTube"),
           master: tg("hideMoreSection", "Hide this section", "Ukryj całą sekcję"),
           items: [
+            tg("hideGuideMoreTitle", "“More from YouTube” heading", "Nagłówek „Więcej z YouTube”"),
+            tg("hideGuidePremium", "YouTube Premium", "YouTube Premium"),
             tg("hideGuideMusic", "YouTube Music", "YouTube Music"),
             tg("hideGuideKids", "YouTube Kids", "YouTube Kids"),
             tg("hideGuideReports", "Report history", "Historia zgłoszeń"),
