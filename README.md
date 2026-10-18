@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/lesstube-%E2%80%94-youtube-cleane/oloemmfdfdnempbpiockejbckckjffci"><strong>Install from the Chrome Web Store</strong></a><br />
+  <a href="https://addons.mozilla.org/en-US/firefox/addon/lesstube-youtube-cleaner/"><strong>Install from Firefox Add-ons</strong></a><br />
   <a href="#features">Features</a> ·
   <a href="#installation">Installation</a> ·
   <a href="#privacy">Privacy</a>
@@ -57,6 +58,10 @@
 ### From the Chrome Web Store
 
 [Install LessTube](https://chromewebstore.google.com/detail/lesstube-%E2%80%94-youtube-cleane/oloemmfdfdnempbpiockejbckckjffci)
+
+### From Firefox Add-ons
+
+[Install LessTube](https://addons.mozilla.org/en-US/firefox/addon/lesstube-youtube-cleaner/)
 
 ### Manual installation
 
