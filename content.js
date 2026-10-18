@@ -493,10 +493,68 @@
     return false;
   }
 
+  function findAutonav() {
+    const direct = document.querySelector("#movie_player .ytp-autonav-toggle-button, ytd-player .ytp-autonav-toggle-button");
+    if (direct) return direct;
+    const player = document.querySelector("#movie_player, ytd-player");
+    let found = null;
+    if (player) {
+      forEachDeep(player, (node) => {
+        if (!found && node.classList?.contains("ytp-autonav-toggle-button")) found = node;
+      });
+    }
+    return found;
+  }
+
+  function autonavOn(button) {
+    const box = button.closest(".ytp-autonav-toggle-button-container") || button;
+    const flag = box.getAttribute("aria-checked") ?? button.getAttribute("aria-checked") ?? button.getAttribute("aria-pressed");
+    return flag === "true";
+  }
+
+  // Trusted clicks on the player bar are the user's choice. Ignore our own .click().
+  let autoplayHold = 0;
+
+  function rememberAutoplay(on) {
+    if (!S.enabled || S.autoplay === on) return;
+    S.autoplay = on;
+    E.autoplay = on;
+    try {
+      chrome.storage.local.set({ autoplay: on });
+    } catch (e) {
+      /* extension context invalidated */
+    }
+  }
+
+  function syncAutoplay() {
+    if (!storageLoaded || !S.enabled || Date.now() < autoplayHold) return;
+    const button = findAutonav();
+    if (!button) return;
+    if (autonavOn(button) === (S.autoplay === true)) return;
+    clickOnce(button, "autoplay");
+  }
+
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!e.isTrusted || !S.enabled) return;
+      const hit = e.target?.closest?.(".ytp-autonav-toggle-button, .ytp-autonav-toggle-button-container");
+      if (!hit || hit.closest("#movie_player, ytd-player") == null) return;
+      autoplayHold = Date.now() + 700;
+      setTimeout(() => {
+        const button = findAutonav();
+        if (button) rememberAutoplay(autonavOn(button));
+        autoplayHold = 0;
+      }, 60);
+    },
+    true
+  );
+
   function applyWatchBehaviors() {
     if (!onWatchPage()) return;
     if (full || E.hideViewCount || E.hidePublishDate || E.hideLicenseRow) tagWatchText();
     if (full || ACTION_KEYS.some((k) => E[k])) tagWatchActions();
+    syncAutoplay();
     if (playerPopupOpen()) return;
 
     if (E.expandDescription === true && E.hideDescription !== true) {

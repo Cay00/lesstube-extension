@@ -479,6 +479,9 @@
             tg("hideNextButton", "Next video", "Następny film", { hide: [".ytp-next-button"] }),
             tg("hidePrevButton", "Previous video", "Poprzedni film", { hide: [".ytp-prev-button"] }),
             tg("hideVolume", "Volume", "Głośność", { hide: [".ytp-volume-area", ".ytp-mute-button", ".ytp-volume-panel"] }),
+            tg("autoplay", "Autoplay", "Autoodtwarzanie", {
+              hint: T("Same switch as on the player bar. Off until you turn it on.", "Ten sam przełącznik co na pasku filmu. Wyłączone, dopóki go nie włączysz."),
+            }),
             tg("hideAutonavButton", "Autoplay switch", "Przełącznik autoodtwarzania", {
               hide: [".ytp-autonav-toggle-button", ".ytp-autonav-toggle-button-container"],
             }),

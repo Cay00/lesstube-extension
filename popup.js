@@ -406,7 +406,13 @@
 
   // The element picker saves from the page while the popup is closed, but keep the list in sync if it is open.
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "local" || !changes.customHide) return;
+    if (area !== "local") return;
+    if (changes.autoplay && typeof changes.autoplay.newValue === "boolean" && changes.autoplay.newValue !== settings.autoplay) {
+      settings.autoplay = changes.autoplay.newValue;
+      const input = document.querySelector('.row[data-key="autoplay"] input');
+      if (input) input.checked = settings.autoplay;
+    }
+    if (!changes.customHide) return;
     const next = Y.cleanCustom(changes.customHide.newValue);
     if (JSON.stringify(next) === JSON.stringify(settings.customHide)) return;
     settings.customHide = next;
