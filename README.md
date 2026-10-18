@@ -14,7 +14,9 @@
   <a href="https://addons.mozilla.org/en-US/firefox/addon/lesstube-youtube-cleaner/"><strong>Install from Firefox Add-ons</strong></a><br />
   <a href="#features">Features</a> ·
   <a href="#installation">Installation</a> ·
-  <a href="#privacy">Privacy</a>
+  <a href="#privacy">Privacy</a> ·
+  <a href="#compatibility">Compatibility</a> ·
+  <a href="#feedback--suggestions">Feedback</a>
 </p>
 
 ---
@@ -44,32 +46,41 @@
 
 ## Features
 
-- **Hide distractions** — remove unwanted sections and interface elements.
+- **Hide distractions** — hide Shorts, comments, recommendations, sidebars, end screens, and other unwanted YouTube elements.
 - **Customize the layout** — adjust the video grid and number of columns.
-- **Personalize the interface** — hide or restyle supported YouTube elements.
-- **Element picker** — in Tools, turn on developer mode to hide an element by clicking it or by typing a CSS selector. This can break the page, so it stays off until you enable it. Already hidden elements can be removed from the same section.
-- **Import and export settings** — back up and transfer your configuration.
+- **Personalize the interface** — use grayscale mode and blur thumbnails to reduce visual distractions.
+- **Hide watched videos** — remove videos you've already watched from supported YouTube feeds.
+- **Control autoplay** — disable thumbnail hover previews and customize supported autoplay-related interface elements.
+- **Element picker** — use developer mode in Tools to hide elements by clicking them or entering a CSS selector. Custom selectors can break parts of the page, so this feature must be enabled manually. You can also remove previously hidden elements from the same section.
+- **Import and export settings** — back up your configuration or transfer it between installations.
 - **Simple settings popup** — manage your preferences in one place.
-- **Works with YouTube in many languages** — buttons are matched by id, URL or structure where possible. Text labels (views, dates, Share, Save and similar) also cover pl, en, de, es, fr, it, pt, ru, uk, nl, cs, tr, ja, zh, ko, hi, ar and id.
-- **13 interface languages** — English, Polish, Spanish, Portuguese, German, French, Russian, Japanese, Chinese, Korean, Hindi, Arabic and Indonesian.
+- **Multilingual support** — the interface is available in 13 languages: English, Polish, Spanish, Portuguese, German, French, Russian, Japanese, Chinese, Korean, Hindi, Arabic, and Indonesian.
+
+LessTube is designed to customize YouTube's interface. It does not replace YouTube's recommendation algorithms or change the videos YouTube makes available.
 
 ## Installation
 
 ### From the Chrome Web Store
 
-[Install LessTube](https://chromewebstore.google.com/detail/lesstube-%E2%80%94-youtube-cleane/oloemmfdfdnempbpiockejbckckjffci)
+[Install LessTube for Chrome](https://chromewebstore.google.com/detail/lesstube-%E2%80%94-youtube-cleane/oloemmfdfdnempbpiockejbckckjffci)
 
 ### From Firefox Add-ons
 
-[Install LessTube](https://addons.mozilla.org/en-US/firefox/addon/lesstube-youtube-cleaner/)
+[Install LessTube for Firefox](https://addons.mozilla.org/en-US/firefox/addon/lesstube-youtube-cleaner/)
 
 ### Manual installation
 
-Source files live in the project root. Browser manifests live in `chrome/manifest.json` and `firefox/manifest.json`.
+Source files are located in the project root. Browser-specific manifests are available in `chrome/manifest.json` and `firefox/manifest.json`.
 
-To load the extension unpacked, copy the manifest for that browser into the project root as `manifest.json`, then select the project directory. Chrome reads `chrome://extensions`. Firefox reads `about:debugging`.
+To load the extension unpacked:
 
-A store package is the same set of root files with that browser's manifest included as `manifest.json`. Leave out the other browser's folder.
+1. Copy the manifest for your target browser into the project root as `manifest.json`.
+2. Open the browser's extension management page.
+3. Load the project directory as an unpacked extension.
+
+In Chrome, open `chrome://extensions` and enable Developer mode. In Firefox, open `about:debugging` and select **This Firefox**.
+
+For store packages, include the appropriate browser manifest as `manifest.json` and leave out the other browser's folder.
 
 Manual installation is intended for testing and development.
 
@@ -79,9 +90,9 @@ LessTube is built with JavaScript, CSS, HTML, and Manifest V3.
 
 | File | Purpose |
 |---|---|
-| `shared.js` | Settings schema (English + Polish labels), CSS generation, import/export, and selector utilities. Loaded on YouTube and in the popup |
-| `labels.js` | Words used to recognise YouTube's own buttons and text (Share, Save, views, "2 days ago" ...) in each YouTube language. Add a language here if a button is not recognised |
-| `i18n.js` | Translations for the other interface languages, keyed by the English text. Popup only |
+| `shared.js` | Shared settings schema, CSS generation, import/export, and selector utilities |
+| `labels.js` | Text and interface labels used to recognize YouTube buttons and content across supported languages |
+| `i18n.js` | Translations for the extension's settings popup |
 | `content.js` | YouTube DOM manipulation, redirects, and element picker |
 | `style.css` | Layout and video grid styling |
 | `popup.html` | Settings interface |
@@ -92,13 +103,29 @@ LessTube is built with JavaScript, CSS, HTML, and Manifest V3.
 
 ## Privacy
 
-LessTube uses Chrome's storage API to save user preferences. It does not make external network requests, use analytics, or load remote code.
+LessTube stores your preferences locally using the browser extension storage API.
+
+- No analytics or tracking.
+- No external network requests made by LessTube.
+- No remotely hosted code.
+- No LessTube account required.
+
+LessTube runs on YouTube and does not need to send your settings to an external server.
 
 ## Compatibility
 
-- Google Chrome 105 or newer
-- Firefox 142 or newer
-- Manifest V3
+- **Google Chrome:** version 105 or newer.
+- **Mozilla Firefox:** version 142 or newer.
+- **Chromium-based browsers:** Brave, Microsoft Edge, Opera, Vivaldi, and others may work, but have not all been individually tested.
+- **Gecko-based browsers:** other Firefox-based browsers may work, but have not all been individually tested.
+
+LessTube uses Manifest V3. Compatibility may vary between browsers and their versions.
+
+## Feedback & Suggestions
+
+Have an idea for a new feature or a way to improve LessTube? Found a bug or something that doesn't work as expected? Feel free to email me at [cayoo.dev@gmail.com](mailto:cayoo.dev@gmail.com). I'd love to hear your suggestions!
+
+You can also open an issue in this repository to report bugs or suggest new features.
 
 ## License
 
