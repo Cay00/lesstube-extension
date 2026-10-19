@@ -58,11 +58,62 @@
     if (!S.enabled) return;
     const target = Y.redirectTarget(location, S);
     if (!target) return;
-    // Home replacement is the landing page only. Later visits (logo, guide, back) stay.
+    // Home replacement on first open only for SPA nav (Home button, back). Logo is below.
     const homeTarget = Y.REDIRECTS[S.homeRedirect];
     if (fromNavigation && homeTarget && target === homeTarget) return;
     location.replace(target);
   }
+
+  /** Destination for the masthead logo when "Open instead of Home" is set. */
+  function logoRedirectTarget() {
+    if (!S.enabled) return null;
+    return Y.REDIRECTS[S.homeRedirect] || null;
+  }
+
+  function isMastheadLogo(node) {
+    return !!node?.closest?.("ytd-masthead a#logo, ytd-masthead ytd-topbar-logo-renderer, ytd-masthead #logo");
+  }
+
+  /** Keep the logo href in sync so middle-click / open-in-new-tab match the setting. */
+  function syncLogoHref() {
+    const target = logoRedirectTarget() || "/";
+    for (const a of document.querySelectorAll("ytd-masthead a#logo")) {
+      if (a.getAttribute("href") !== target) a.setAttribute("href", target);
+    }
+  }
+
+  function goLogoTarget(newTab) {
+    const target = logoRedirectTarget();
+    if (!target) return;
+    if (newTab) {
+      window.open(location.origin + target, "_blank", "noopener");
+      return;
+    }
+    if (location.pathname + location.search === target) return;
+    location.assign(target);
+  }
+
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!logoRedirectTarget() || !isMastheadLogo(e.target) || e.defaultPrevented || e.button !== 0) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      goLogoTarget(e.metaKey || e.ctrlKey);
+    },
+    true
+  );
+
+  document.addEventListener(
+    "auxclick",
+    (e) => {
+      if (e.button !== 1 || !logoRedirectTarget() || !isMastheadLogo(e.target)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      goLogoTarget(true);
+    },
+    true
+  );
 
   /* --------------------------------------------------------- grid layout */
 
@@ -853,6 +904,7 @@
     // Pausing only clears CSS via paint(); without this, yt-navigate-finish still
     // sets full and markGuide keeps clicking guide rows — which can leave the SPA broken.
     if (!S.enabled) {
+      syncLogoHref();
       full = false;
       return;
     }
@@ -861,6 +913,7 @@
     const menuOpen = pageMenuOpen();
     try {
       updateGrids();
+      syncLogoHref();
       if (menuOpen) return;
       if (full || E.hideShorts || E.hideGames) markWidgets();
       if (full || E.hideWatched) markWatched();

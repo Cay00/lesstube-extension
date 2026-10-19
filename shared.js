@@ -150,7 +150,7 @@
               opt("watchLater", "Watch later", "Do obejrzenia"),
             ], {
               def: "home",
-              hint: T("Only when YouTube opens. The logo still opens Home.", "Tylko przy otwarciu YouTube. Logo nadal otwiera stronę główną."),
+              hint: T("Also when you click the YouTube logo. Home in the sidebar still opens Home.", "Także po kliknięciu logo YouTube. „Strona główna” w menu nadal otwiera stronę główną."),
             }),
             sl("columns", "Videos per row", "Filmów w rzędzie", [
               opt(0, "YouTube default", "Domyślnie"),

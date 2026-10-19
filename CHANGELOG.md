@@ -2,6 +2,11 @@
 
 All notable changes to LessTube are documented here.
 
+## [1.0.9]
+
+- Fixed the redirect behavior when using a custom YouTube start page. Clicking the YouTube logo now opens the selected page, while clicking “Home” always opens the actual YouTube homepage.
+- Removed the “Latest” top bar from the Subscriptions page.
+
 ## [1.0.8]
 
 - Fixed a bug where watching videos could cause the YouTube logo and sidebar links to navigate to `/feed/you`, breaking in-page navigation until the page was reloaded.
