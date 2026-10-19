@@ -6,6 +6,7 @@ All notable changes to LessTube are documented here.
 
 - Fixed the redirect behavior when using a custom YouTube start page. Clicking the YouTube logo now opens the selected page, while clicking “Home” always opens the actual YouTube homepage.
 - Removed the “Latest” top bar from the Subscriptions page.
+- Adjusted the frosted glass overlay height when hiding the topic chips bar.
 
 ## [1.0.8]
 
@@ -35,10 +36,3 @@ All notable changes to LessTube are documented here.
 ## [1.0.0]
 
 - Initial release of LessTube.
-
-## [Unreleased]
-
-### Planned
-- Keyboard shortcuts for playback speed, with an option to set a default speed.
-- Option to set the default video playback quality.
-- Custom accent color for the YouTube interface.
