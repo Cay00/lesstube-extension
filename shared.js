@@ -220,6 +220,18 @@
           ],
         },
         {
+          title: T("Subscriptions", "Subskrypcje"),
+          items: [
+            tg("hideSubsLatest", "Hide the “Latest” bar", "Ukryj pasek „Najnowsze”", {
+              hint: T("The Latest heading on the Subscriptions page", "Nagłówek Najnowsze na stronie Subskrypcje"),
+              // Language-proof: Latest bar’s “All subscriptions” button lives in #subscribe-button.
+              hide: [
+                'ytd-browse[page-subtype="subscriptions"] ytd-rich-section-renderer:has(#subscribe-button a[href="/feed/channels"])',
+              ],
+            }),
+          ],
+        },
+        {
           title: T("Shorts and Playables", "Shorts i gry"),
           items: [
             tg("hideShorts", "Hide Shorts everywhere", "Ukryj Shorts wszędzie", {
