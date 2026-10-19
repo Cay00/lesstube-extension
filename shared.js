@@ -194,6 +194,8 @@
             }),
             tg("hideFeedChips", "Hide the topic chips bar", "Ukryj pasek kategorii", {
               hide: ["ytd-feed-filter-chip-bar-renderer", "ytd-rich-grid-renderer #chips-wrapper"],
+              // Without this, #frosted-glass stays masthead+chips tall and covers the first video row.
+              css: "& #frosted-glass{height:var(--ytd-toolbar-height,56px)!important}",
             }),
             tg("hideHomeShelves", "Hide extra shelves", "Ukryj dodatkowe sekcje", {
               hint: T("News, posts, Shorts rows between videos", "Wiadomości, posty, rzędy Shorts między filmami"),
