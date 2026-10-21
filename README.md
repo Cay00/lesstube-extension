@@ -19,22 +19,6 @@
   <a href="#feedback--suggestions">Feedback</a>
 </p>
 
-<p align="center">
-  <a href="https://chromewebstore.google.com/detail/lesstube-%E2%80%94-youtube-cleane/oloemmfdfdnempbpiockejbckckjffci">
-    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCay00%2Flesstube-extension%2Fmain%2F.github%2Fextension-stats.json&query=%24.chrome.downloads&label=Chrome%20users&color=4285F4&logo=googlechrome&logoColor=white" alt="Chrome users" />
-    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCay00%2Flesstube-extension%2Fmain%2F.github%2Fextension-stats.json&query=%24.chrome.rating&label=Chrome%20rating&color=34A853&suffix=%20%2F%205" alt="Chrome rating" />
-    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCay00%2Flesstube-extension%2Fmain%2F.github%2Fextension-stats.json&query=%24.chrome.comments&label=Chrome%20reviews&color=FBBC05" alt="Chrome reviews" />
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://addons.mozilla.org/en-US/firefox/addon/lesstube-youtube-cleaner/">
-    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCay00%2Flesstube-extension%2Fmain%2F.github%2Fextension-stats.json&query=%24.firefox.downloads&label=Firefox%20users&color=FF7139&logo=firefoxbrowser&logoColor=white" alt="Firefox users" />
-    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCay00%2Flesstube-extension%2Fmain%2F.github%2Fextension-stats.json&query=%24.firefox.rating&label=Firefox%20rating&color=34A853&suffix=%20%2F%205" alt="Firefox rating" />
-    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCay00%2Flesstube-extension%2Fmain%2F.github%2Fextension-stats.json&query=%24.firefox.comments&label=Firefox%20reviews&color=FBBC05" alt="Firefox reviews" />
-  </a>
-</p>
-
 ---
 
 ## See LessTube in action
